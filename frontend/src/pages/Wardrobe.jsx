@@ -1,173 +1,154 @@
-import React, { useState, useEffect } from "react";
-import "./Wardrobe.css";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import './Wardrobe.css';
 
-const sampleItems = [
-  {
-    id: 1,
-    name: "Black Leather Jacket",
-    type: "clothing",
-    category: "outerwear",
-    color: "#000000",
-    image:
-      "https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=400",
-    dateAdded: "2024-02-15",
-    tags: ["Casual", "Edgy", "Versatile"],
-    favorite: true,
-  },
-  {
-    id: 2,
-    name: "White Silk Blouse",
-    type: "clothing",
-    category: "top",
-    color: "#FFFFFF",
-    image:
-      "https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?auto=format&fit=crop&w=400",
-    dateAdded: "2024-02-10",
-    tags: ["Formal", "Office"],
-    favorite: false,
-  },
-  {
-    id: 3,
-    name: "Blue Denim Jeans",
-    type: "clothing",
-    category: "bottom",
-    color: "#0000FF",
-    image:
-      "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=400",
-    dateAdded: "2024-02-05",
-    tags: ["Casual", "Comfort"],
-    favorite: true,
-  },
-];
-
-export default function Wardrobe() {
+const Wardrobe = () => {
+  const navigate = useNavigate();
   const [items, setItems] = useState([]);
-  const [filter, setFilter] = useState("all");
-  const [showModal, setShowModal] = useState(false);
+  const [newItem, setNewItem] = useState({
+    name: '',
+    category: 'shirt',
+    image: '',
+    color: ''
+  });
+  const [showForm, setShowForm] = useState(false);
 
+  // Load items from localStorage
   useEffect(() => {
-    setTimeout(() => {
-      setItems(sampleItems);
-    }, 800);
+    const saved = localStorage.getItem('wardrobe');
+    if (saved) {
+      setItems(JSON.parse(saved));
+    }
   }, []);
 
-  const toggleFavorite = (id) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, favorite: !item.favorite } : item
-      )
-    );
+  // Save to localStorage
+  useEffect(() => {
+    localStorage.setItem('wardrobe', JSON.stringify(items));
+  }, [items]);
+
+  const addItem = (e) => {
+    e.preventDefault();
+    const item = {
+      ...newItem,
+      id: Date.now(),
+      added: new Date().toLocaleDateString()
+    };
+    setItems([item, ...items]);
+    setNewItem({ name: '', category: 'shirt', image: '', color: '' });
+    setShowForm(false);
   };
 
   const deleteItem = (id) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+    setItems(items.filter(item => item.id !== id));
   };
 
-  const filteredItems =
-    filter === "all"
-      ? items
-      : filter === "favorites"
-      ? items.filter((item) => item.favorite)
-      : items.filter((item) => item.type === filter);
-
-  const totalItems = items.length;
-  const categories = [...new Set(items.map((i) => i.category))].length;
-
-  const tops = items.filter((i) => i.category === "top").length;
-  const bottoms = items.filter((i) => i.category === "bottom").length;
-  const dresses = items.filter((i) => i.category === "dress").length;
-
-  const outfitCombinations = tops * bottoms + dresses;
+  const categories = ['shirt', 'pants', 'dress', 'shoes', 'jacket', 'accessories'];
 
   return (
     <div className="wardrobe-page">
-      <h1 className="hero-title">
-        Your Digital <span className="highlight">Wardrobe</span>
-      </h1>
-
-      {/* Stats */}
-      <div className="wardrobe-stats">
-        <div className="stat-card">
-          <div className="stat-number">{totalItems}</div>
-          <p>Total Items</p>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-number">{categories}</div>
-          <p>Categories</p>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-number">{outfitCombinations}</div>
-          <p>Possible Outfits</p>
-        </div>
+      <div className="wardrobe-header">
+        <h1>My Wardrobe ({items.length} items)</h1>
+        <button 
+          className="add-btn btn-primary" 
+          onClick={() => setShowForm(true)}
+        >
+          + Add Clothing Item
+        </button>
       </div>
 
-      {/* Filters */}
-      <div className="filters">
-        {["all", "clothing", "favorites"].map((type) => (
-          <button
-            key={type}
-            onClick={() => setFilter(type)}
-            className={filter === type ? "active" : ""}
-          >
-            {type.toUpperCase()}
-          </button>
+      {/* ADD ITEM FORM */}
+      {showForm && (
+        <div className="add-item-form">
+          <form onSubmit={addItem}>
+            <div className="form-row">
+              <input
+                type="text"
+                placeholder="Item Name (e.g. Blue Cotton Shirt)"
+                value={newItem.name}
+                onChange={(e) => setNewItem({...newItem, name: e.target.value})}
+                required
+              />
+              <select
+                value={newItem.category}
+                onChange={(e) => setNewItem({...newItem, category: e.target.value})}
+              >
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-row">
+              <input
+                type="text"
+                placeholder="Color (e.g. Blue, Black)"
+                value={newItem.color}
+                onChange={(e) => setNewItem({...newItem, color: e.target.value})}
+              />
+              <input
+                type="text"
+                placeholder="Image URL (optional)"
+                value={newItem.image}
+                onChange={(e) => setNewItem({...newItem, image: e.target.value})}
+              />
+            </div>
+            <div className="form-actions">
+              <button type="submit" className="btn-primary">Add Item</button>
+              <button 
+                type="button" 
+                className="btn-secondary"
+                onClick={() => setShowForm(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ITEMS GRID */}
+      <div className="wardrobe-grid">
+        {items.map((item) => (
+          <div key={item.id} className="wardrobe-item">
+            <div 
+              className={`item-image ${item.category}`} 
+              style={{ 
+                backgroundImage: `url(${item.image || '/api/placeholder/300/300'})`,
+                backgroundColor: item.color === 'black' ? '#333' : item.color || '#667eea'
+              }}
+            >
+              {!item.image && (
+                <span className="item-placeholder">
+                  {item.category.toUpperCase()}
+                </span>
+              )}
+            </div>
+            <div className="item-info">
+              <h3>{item.name}</h3>
+              <p>Category: <span className="category">{item.category}</span></p>
+              <p>Color: <span style={{color: item.color}}>{item.color}</span></p>
+              <p>Added: {item.added}</p>
+              <button 
+                className="delete-btn"
+                onClick={() => deleteItem(item.id)}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         ))}
       </div>
 
-      {/* Grid */}
-      <div className="wardrobe-grid">
-        {filteredItems.length === 0 ? (
-          <div className="empty">
-            <p>No items found.</p>
-            <button onClick={() => setShowModal(true)}>Add Item</button>
-          </div>
-        ) : (
-          filteredItems.map((item) => (
-            <div key={item.id} className="wardrobe-card">
-              <img src={item.image} alt={item.name} />
-              <div className="card-body">
-                <h4>{item.name}</h4>
-                <div className="meta">
-                  <span>{item.category}</span>
-                  <div
-                    className="color-dot"
-                    style={{ background: item.color }}
-                  ></div>
-                </div>
-
-                <div className="tags">
-                  {item.tags.map((tag, i) => (
-                    <span key={i}>{tag}</span>
-                  ))}
-                </div>
-
-                <div className="actions">
-                  <button onClick={() => toggleFavorite(item.id)}>
-                    {item.favorite ? "❤️" : "🤍"}
-                  </button>
-                  <button onClick={() => deleteItem(item.id)}>🗑</button>
-                </div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* Modal */}
-      {showModal && (
-        <div className="modal" onClick={() => setShowModal(false)}>
-          <div
-            className="modal-content"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3>Add New Item</h3>
-            <p>(Upload functionality will be connected to backend later)</p>
-            <button onClick={() => setShowModal(false)}>Close</button>
-          </div>
+      {items.length === 0 && (
+        <div className="empty-state">
+          <h2>Your wardrobe is empty</h2>
+          <p>Add your first clothing item to get started!</p>
+          <button className="btn-primary" onClick={() => setShowForm(true)}>
+            Add First Item
+          </button>
         </div>
       )}
     </div>
   );
-}
+};
+
+export default Wardrobe;

@@ -1,126 +1,116 @@
 .wardrobe-page {
-  padding: 120px 5%;
-  background: #0f172a;
-  min-height: 100vh;
-  color: white;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.hero-title {
-  text-align: center;
-  margin-bottom: 40px;
-}
-
-.highlight {
-  color: #facc15;
-}
-
-.wardrobe-stats {
+.wardrobe-header {
   display: flex;
-  justify-content: center;
-  gap: 30px;
-  margin-bottom: 40px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
 }
 
-.stat-card {
-  background: #1e293b;
-  padding: 20px 30px;
-  border-radius: 12px;
-  text-align: center;
+.add-btn {
+  font-size: 1.1rem;
+  padding: 1rem 2rem !important;
 }
 
-.stat-number {
-  font-size: 1.8rem;
-  font-weight: bold;
-}
-
-.filters {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-bottom: 40px;
-}
-
-.filters button {
-  padding: 10px 20px;
+.add-item-form {
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(20px);
   border-radius: 20px;
-  border: none;
-  cursor: pointer;
-  background: #1e293b;
-  color: white;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(255,255,255,0.2);
 }
 
-.filters button.active {
-  background: #facc15;
-  color: black;
+.form-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-row input, .form-row select {
+  padding: 1rem;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  backdrop-filter: blur(10px);
+}
+
+.form-row input::placeholder {
+  color: rgba(255,255,255,0.7);
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
 }
 
 .wardrobe-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 30px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
 }
 
-.wardrobe-card {
-  background: #1e293b;
-  border-radius: 15px;
-  overflow: hidden;
+.wardrobe-item {
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255,255,255,0.2);
+  transition: all 0.3s ease;
 }
 
-.wardrobe-card img {
+.wardrobe-item:hover {
+  transform: translateY(-5px);
+}
+
+.item-image {
   width: 100%;
   height: 200px;
-  object-fit: cover;
-}
-
-.card-body {
-  padding: 15px;
-}
-
-.meta {
+  border-radius: 15px;
+  margin-bottom: 1rem;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-}
-
-.color-dot {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-}
-
-.tags {
-  margin: 10px 0;
-}
-
-.tags span {
-  background: #334155;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  margin-right: 5px;
-}
-
-.actions {
-  display: flex;
-  justify-content: space-between;
-}
-
-.empty {
-  text-align: center;
-}
-
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  display: flex;
   justify-content: center;
-  align-items: center;
+  font-size: 0.9rem;
+  background-size: cover;
+  background-position: center;
 }
 
-.modal-content {
-  background: white;
-  color: black;
-  padding: 30px;
-  border-radius: 12px;
+.item-placeholder {
+  color: rgba(255,255,255,0.7);
+}
+
+.item-info h3 {
+  margin-bottom: 0.5rem;
+  color: #4ecdc4;
+}
+
+.category {
+  background: rgba(78, 205, 196, 0.2);
+  color: #4ecdc4;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+
+.delete-btn {
+  background: #ff4757;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem;
+  color: rgba(255,255,255,0.7);
 }

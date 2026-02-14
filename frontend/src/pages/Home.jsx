@@ -1,11 +1,16 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Home.css";
 
 const Home = () => {
   const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);  // NEW: Track auth state
 
   useEffect(() => {
+    // NEW: Check login status
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
+
     const handleScroll = () => {
       const backToTop = document.getElementById("backToTop");
       if (window.scrollY > 300) {
@@ -21,7 +26,7 @@ const Home = () => {
 
   return (
     <div className="home-page">
-      {/* HERO SECTION */}
+      {/* HERO SECTION - Updated buttons based on auth */}
       <section className="hero">
         <div className="container">
           <h1 className="hero-title">
@@ -35,13 +40,21 @@ const Home = () => {
           </p>
 
           <div className="hero-actions">
-            <button
-              className="btn btn-primary"
-              onClick={() => navigate("/wardrobe")}
-            >
-              Start Your Journey
-            </button>
-
+            {isLoggedIn ? (
+              <button
+                className="btn btn-primary"
+                onClick={() => navigate("/wardrobe")}
+              >
+                My Wardrobe →
+              </button>
+            ) : (
+              <button
+                className="btn btn-primary"
+                onClick={() => navigate("/login")}
+              >
+                Get Started Free
+              </button>
+            )}
             <button
               className="btn btn-secondary"
               onClick={() => navigate("/about")}
@@ -71,7 +84,10 @@ const Home = () => {
             <div className="feature-card">
               <h3>Digital Wardrobe</h3>
               <p>
-                Upload and organize clothing in your virtual wardrobe.
+                {isLoggedIn 
+                  ? "Your uploaded clothes organized perfectly." 
+                  : "Upload and organize clothing in your virtual wardrobe."
+                }
               </p>
             </div>
 
@@ -92,18 +108,27 @@ const Home = () => {
         </div>
       </section>
 
-      {/* CTA SECTION */}
+      {/* CTA SECTION - Auth conditional */}
       <section className="cta-section">
         <div className="container">
           <h2>Ready to Transform Your Style?</h2>
           <p>Start your style journey today — it's free.</p>
-
-          <button
-            className="btn btn-primary"
-            onClick={() => navigate("/wardrobe")}
-          >
-            Create Free Account
-          </button>
+          
+          {isLoggedIn ? (
+            <button
+              className="btn btn-primary"
+              onClick={() => navigate("/wardrobe")}
+            >
+              Open My Wardrobe
+            </button>
+          ) : (
+            <button
+              className="btn btn-primary"
+              onClick={() => navigate("/register")}
+            >
+              Create Free Account
+            </button>
+          )}
         </div>
       </section>
 

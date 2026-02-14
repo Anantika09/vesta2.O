@@ -1,27 +1,27 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';  // ← ADD THIS
 import './Login.css';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate();  // ← ADD THIS
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Get users from localStorage
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    
-    // Find user
-    const user = users.find(u => u.email === email && u.password === password);
-    
-    if (user) {
-      alert('Login successful!');
-      window.location.href = '/'; // Go to home page
-    } else {
-      setError('Invalid credentials. Please try again.');
-    }
-  };
+  e.preventDefault();
+  const users = JSON.parse(localStorage.getItem('users') || '[]');
+  const user = users.find(u => u.email === email && u.password === password);
+  
+  if (user) {
+    localStorage.setItem('token', 'vesta-auth-2026');
+    localStorage.setItem('user', JSON.stringify(user));
+    window.location.href = '/'; // FORCE redirect
+  } else {
+    setError('Invalid credentials');
+  }
+};
+
 
   return (
     <div className="auth-container">

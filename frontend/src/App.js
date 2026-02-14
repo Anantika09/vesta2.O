@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import PrivateRoute from "./routes/PrivateRoute";
+import Navbar from './components/Navbar';  // ← MOVED OUTSIDE Routes
 
 /* Public Pages */
 import Home from "./pages/Home";
@@ -19,8 +20,10 @@ import Event from "./pages/Event";
 function App() {
   return (
     <Router>
+      {/* ← NAVBAR NOW VISIBLE ON ALL PAGES */}
+      <Navbar />
+      
       <Routes>
-
         {/* ========== PUBLIC ROUTES ========== */}
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
@@ -69,7 +72,6 @@ function App() {
 
         {/* ========== FALLBACK ROUTE ========== */}
         <Route path="*" element={<Navigate to="/" replace />} />
-
       </Routes>
     </Router>
   );
