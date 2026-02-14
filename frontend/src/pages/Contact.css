@@ -1,0 +1,16 @@
+/* Contact.css */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Arial', sans-serif; background: #0a0a0f; color: white; min-height: 100vh; }
+.navbar { position: fixed; top: 0; width: 100%; background: rgba(0,0,0,0.9); padding: 1rem 5%; z-index: 1000; }
+.nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+.logo { font-size: 2rem; font-weight: bold; color: #facc15; text-decoration: none; }
+.nav-menu a { margin: 0 1rem; color: white; text-decoration: none; font-weight: bold; }
+.contact-container { display: flex; justify-content: space-around; padding: 40px 20px; }
+.contact-info { max-width: 500px; }
+.contact-info h2 { color: #facc15; margin-bottom: 1rem; }
+.contact-info .info-item { margin-bottom: 0.5rem; }
+.contact-form { max-width: 500px; display: flex; flex-direction: column; gap: 1rem; }
+.contact-form input,
+.contact-form textarea { padding: 10px; background: rgba(255,255,255,0.2); border: none; border-radius: 5px; color: white; }
+.contact-form button { padding: 10px; background: #facc15; color: black; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }

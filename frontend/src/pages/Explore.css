@@ -1,0 +1,16 @@
+.explore-section {
+  padding: 120px 0 80px;
+}
+
+.explore-title {
+  font-size: 3rem;
+  text-align: center;
+  margin-bottom: 3rem;
+  color: #facc15;
+}
+
+.explore-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}

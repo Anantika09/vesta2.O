@@ -1,0 +1,15 @@
+/* About.css */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Arial', sans-serif; background: #0a0a0f; color: white; min-height: 100vh; }
+.navbar { position: fixed; top: 0; width: 100%; background: rgba(0,0,0,0.9); padding: 1rem 5%; z-index: 1000; }
+.nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+.logo { font-size: 2rem; font-weight: bold; color: #facc15; text-decoration: none; }
+.nav-menu a { margin: 0 1rem; color: white; text-decoration: none; font-weight: bold; }
+.about-hero { padding: 100px 20px 60px; text-align: center; }
+.about-hero h1 { font-size: 3rem; color: #facc15; }
+.about-hero h1 span { color: #ffffff; }
+.features-grid { display: flex; justify-content: space-around; padding: 40px 20px; }
+.feature-card { background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; max-width: 300px; text-align: center; }
+.feature-card h3 { color: #facc15; }
+.feature-card p { color: white; }

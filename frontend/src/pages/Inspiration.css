@@ -1,0 +1,52 @@
+.inspiration-page {
+  padding: 40px;
+}
+
+.page-header-inspiration {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.gradient-text {
+  color: #8b5cf6;
+}
+
+.inspiration-grid-page {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 30px;
+}
+
+.inspiration-card-page {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  transition: 0.3s;
+}
+
+.inspiration-card-page:hover {
+  transform: translateY(-8px);
+}
+
+.inspiration-image-page img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+}
+
+.inspiration-content-page {
+  padding: 20px;
+}
+
+.inspiration-tags-page {
+  margin-top: 10px;
+}
+
+.inspiration-tag-page {
+  background: #eee;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  margin-right: 5px;
+}
