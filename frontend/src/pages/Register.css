@@ -1,15 +1,101 @@
-/* Register.css */
+/* Register.css - Scoped to register page only */
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Arial', sans-serif; background: #0a0a0f; color: white; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-.navbar { position: fixed; top: 0; width: 100%; background: rgba(0,0,0,0.9); padding: 1rem 5%; z-index: 1000; }
-.nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
-.logo { font-size: 2rem; font-weight: bold; color: #facc15; text-decoration: none; }
-.btn { padding: 12px 24px; background: #facc15; color: black; text-decoration: none; border-radius: 5px; font-weight: bold; }
-.auth-card { background: rgba(255,255,255,0.1); padding: 3rem; border-radius: 10px; max-width: 450px; width: 100%; text-align: center; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
-.form-group { margin-bottom: 1.5rem; }
-.form-input { width: 100%; padding: 1rem; background: rgba(255,255,255,0.2); border: none; border-radius: 5px; color: white; font-size: 1rem; }
-.form-input::placeholder { color: rgba(255,255,255,0.6); }
-.form-submit { width: 100%; padding: 1rem; background: #facc15; color: black; border: none; border-radius: 5px; font-weight: bold; font-size: 1.1rem; cursor: pointer; }
-.auth-error { color: #f40612; text-align: center; margin-top: 1rem; }
+.register-page * { 
+  margin: 0; 
+  padding: 0; 
+  box-sizing: border-box; 
+}
+
+.register-page body { 
+  font-family: 'Arial', sans-serif; 
+  background: #0a0a0f; 
+  color: white; 
+  min-height: 100vh; 
+}
+
+.register-page .navbar { 
+  position: fixed; 
+  top: 0; 
+  left: 0;
+  width: 100%; 
+  background: rgba(0,0,0,0.9); 
+  padding: 1rem 5%; 
+  z-index: 1000; 
+}
+
+.register-page .nav-container { 
+  max-width: 1200px; 
+  margin: 0 auto; 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+}
+
+.register-page .logo { 
+  font-size: 2rem; 
+  font-weight: bold; 
+  color: #facc15; 
+  text-decoration: none; 
+}
+
+.register-page .btn { 
+  padding: 12px 24px; 
+  background: #facc15; 
+  color: black; 
+  text-decoration: none; 
+  border-radius: 5px; 
+  font-weight: bold; 
+}
+
+.register-page .auth-card { 
+  background: rgba(255,255,255,0.1); 
+  padding: 3rem; 
+  border-radius: 10px; 
+  max-width: 450px; 
+  width: 100%;
+  margin: 100px auto 0; /* Add margin top to account for fixed navbar */
+  text-align: center; 
+}
+
+.register-page .form-row { 
+  display: grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap: 1rem; 
+  margin-bottom: 1rem; 
+}
+
+.register-page .form-group { 
+  margin-bottom: 1.5rem; 
+}
+
+.register-page .form-input { 
+  width: 100%; 
+  padding: 1rem; 
+  background: rgba(255,255,255,0.2); 
+  border: none; 
+  border-radius: 5px; 
+  color: white; 
+  font-size: 1rem; 
+}
+
+.register-page .form-input::placeholder { 
+  color: rgba(255,255,255,0.6); 
+}
+
+.register-page .form-submit { 
+  width: 100%; 
+  padding: 1rem; 
+  background: #facc15; 
+  color: black; 
+  border: none; 
+  border-radius: 5px; 
+  font-weight: bold; 
+  font-size: 1.1rem; 
+  cursor: pointer; 
+}
+
+.register-page .auth-error { 
+  color: #f40612; 
+  text-align: center; 
+  margin-top: 1rem; 
+}
