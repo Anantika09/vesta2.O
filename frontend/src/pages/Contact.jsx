@@ -1,75 +1,147 @@
 import React, { useState } from 'react';
-import './Contact.css'; // We’ll move styles to a separate CSS file
+import './Contact.css';
 
 const Contact = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
-  const [status, setStatus] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Implement your contact form logic here
-    // For now, we'll show a success message
-    alert('Message sent successfully! 🎉 We will get back to you soon.');
-    setName('');
-    setEmail('');
-    setMessage('');
-    setStatus(''); // Reset status after submission
+    setIsSubmitting(true);
+    
+    // Simulate form submission
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setIsSubmitted(true);
+      setFormData({ name: '', email: '', message: '' });
+      setTimeout(() => setIsSubmitted(false), 3000);
+    }, 1500);
   };
 
   return (
-    <div>
-      <nav className="navbar">
-        <div className="nav-container">
-          <a href="/" className="logo">
-            <i className="fas fa-crown"></i>
-            <span>VESTA</span>
-          </a>
-          <div className="nav-menu">
-            <a href="/">Home</a>
-            <a href="/explore">Explore</a>
-            <a href="/wardrobe">Wardrobe</a>
-            <a href="/profile">Profile</a>
-          </div>
-          <div id="authButtons">
-            {/* This can be dynamically populated based on auth state */}
-          </div>
-        </div>
-      </nav>
+    <div className="contact-page">
+      {/* Simple Background */}
+      <div className="contact-bg"></div>
 
       <div className="contact-container">
-        <div className="contact-info">
-          <h2>Let's Talk Style</h2>
-          <p>Have questions about how Vesta works or want to suggest a feature? Drop us a message.</p>
-          <div className="info-item">📍 Agra, Uttar Pradesh</div>
-          <div className="info-item">📧 support@vestastyle.com</div>
+        {/* Header */}
+        <div className="contact-header">
+          <span className="contact-tag">CONTACT</span>
+          <h1 className="contact-title">Get in touch</h1>
+          <p className="contact-subtitle">
+            Have questions about Vesta? We'd love to hear from you.
+          </p>
         </div>
 
-        <form id="contactForm" className="contact-form" onSubmit={handleSubmit}>
-          <input
-            type="text"
-            placeholder="Your Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-          <input
-            type="email"
-            placeholder="Your Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <textarea
-            placeholder="How can we help?"
-            rows="5"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            required
-          ></textarea>
-          <button type="submit" className="btn-main">Send Message</button>
-        </form>
+        {/* Two Column Layout */}
+        <div className="contact-grid">
+          {/* Left Column - Info */}
+          <div className="contact-info">
+            <div className="info-card">
+              <h2 className="info-title">Email us</h2>
+              <a href="mailto:hello@vesta.style" className="info-email">hello@vesta.style</a>
+              <a href="mailto:support@vesta.style" className="info-email">support@vesta.style</a>
+            </div>
+
+            <div className="info-card">
+              <h2 className="info-title">Visit us</h2>
+              <p className="info-address">
+                GLA University<br />
+                Mathura, Uttar Pradesh<br />
+                India
+              </p>
+            </div>
+
+            <div className="info-card">
+              <h2 className="info-title">Call us</h2>
+              <a href="tel:+919105188751" className="info-phone">+91 91051 88751</a>
+            </div>
+
+            <div className="info-card">
+              <h2 className="info-title">Follow us</h2>
+              <div className="social-links">
+                <a href="#" className="social-link">Instagram</a>
+                <a href="#" className="social-link">Twitter</a>
+                <a href="#" className="social-link">LinkedIn</a>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Form */}
+          <div className="contact-form-col">
+            <div className="form-card">
+              <h2 className="form-card-title">Send a message</h2>
+              
+              {isSubmitted ? (
+                <div className="success-message">
+                  <span className="success-icon">✓</span>
+                  <p>Thank you! We'll get back to you soon.</p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="contact-form">
+                  <div className="form-group">
+                    <label htmlFor="name" className="form-label">Your name</label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      className="form-input"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="email" className="form-label">Email address</label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      className="form-input"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="message" className="form-label">Message</label>
+                    <textarea
+                      id="message"
+                      name="message"
+                      className="form-input form-textarea"
+                      value={formData.message}
+                      onChange={handleChange}
+                      rows="5"
+                      required
+                    />
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    className="submit-btn"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Sending...' : 'Send message'}
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,116 +1,149 @@
 .wardrobe-page {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  padding-top: 120px;
+  min-height: 100vh;
 }
 
 .wardrobe-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
+  align-items: flex-end;
+  margin-bottom: 40px;
 }
 
-.add-btn {
-  font-size: 1.1rem;
-  padding: 1rem 2rem !important;
+.item-count {
+  color: var(--vesta-rose);
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-size: 0.8rem;
 }
 
-.add-item-form {
-  background: rgba(255,255,255,0.1);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  border: 1px solid rgba(255,255,255,0.2);
+/* Premium Form */
+.add-item-container {
+  margin-bottom: 50px;
+  padding: 40px;
 }
 
-.form-row {
+.form-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
 }
 
-.form-row input, .form-row select {
-  padding: 1rem;
-  border: none;
+.premium-form input, 
+.premium-form select {
+  width: 100%;
+  padding: 15px 20px;
+  border: 1px solid var(--vesta-shell);
   border-radius: 12px;
-  background: rgba(255,255,255,0.1);
-  color: white;
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.8);
+  font-family: 'Montserrat', sans-serif;
+  outline: none;
+  transition: border-color 0.3s ease;
 }
 
-.form-row input::placeholder {
-  color: rgba(255,255,255,0.7);
+.premium-form input:focus {
+  border-color: var(--vesta-rose);
 }
 
-.form-actions {
-  display: flex;
-  gap: 1rem;
-}
-
+/* Wardrobe Grid */
 .wardrobe-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 30px;
 }
 
-.wardrobe-item {
-  background: rgba(255,255,255,0.1);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
-  padding: 1.5rem;
-  border: 1px solid rgba(255,255,255,0.2);
-  transition: all 0.3s ease;
+.wardrobe-item-card {
+  padding: 0;
+  overflow: hidden;
+  border: none;
 }
 
-.wardrobe-item:hover {
-  transform: translateY(-5px);
-}
-
-.item-image {
-  width: 100%;
-  height: 200px;
-  border-radius: 15px;
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
+.item-preview {
+  height: 320px;
   background-size: cover;
   background-position: center;
+  position: relative;
+  transition: transform 0.5s ease;
 }
 
-.item-placeholder {
-  color: rgba(255,255,255,0.7);
+.wardrobe-item-card:hover .item-preview {
+  transform: scale(1.03);
 }
 
-.item-info h3 {
-  margin-bottom: 0.5rem;
-  color: #4ecdc4;
-}
-
-.category {
-  background: rgba(78, 205, 196, 0.2);
-  color: #4ecdc4;
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.9rem;
-}
-
-.delete-btn {
-  background: #ff4757;
-  color: white;
+.delete-overlay {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--vesta-deep);
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   cursor: pointer;
-  margin-top: 1rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
+.wardrobe-item-card:hover .delete-overlay {
+  opacity: 1;
+}
+
+.item-details {
+  padding: 20px;
+  background: white;
+}
+
+.item-cat {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--vesta-rose);
+  font-weight: 700;
+}
+
+.item-details h3 {
+  font-size: 1.1rem;
+  margin: 5px 0 15px 0;
+  color: var(--text-main);
+  font-family: 'Montserrat', sans-serif;
+}
+
+.item-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--vesta-shell);
+  padding-top: 15px;
+}
+
+.item-color-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+.item-date {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+/* Empty State */
 .empty-state {
   text-align: center;
-  padding: 4rem;
-  color: rgba(255,255,255,0.7);
+  padding: 80px 40px;
+  margin-top: 40px;
+}
+
+/* Animations */
+.animate-slide-down {
+  animation: slideDown 0.4s ease-out forwards;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
