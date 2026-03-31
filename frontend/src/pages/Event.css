@@ -1,9 +1,387 @@
-.events-page { padding: 2rem; max-width: 1400px; margin: 0 auto; }
-.page-header-events { text-align: center; margin-bottom: 2rem; }
-.event-planner { background: linear-gradient(135deg, #6A11CB 0%, #2575FC 100%); border-radius: 1rem; padding: 2rem; color: white; margin-bottom: 2rem; }
-.planner-header { text-align: center; margin-bottom: 1rem; }
-.planner-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; max-width: 800px; margin: 0 auto; }
-.form-group-events { display: flex; flex-direction: column; gap: 0.5rem; }
-.form-control-events { padding: 0.75rem; border-radius: 0.5rem; border: 2px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: white; font-size: 1rem; }
-.btn-plan-event { grid-column: 1 / -1; justify-self: center; background: white; color: #6A11CB; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; margin-top: 1rem; cursor: pointer; }
-/* ... continue pasting your full events.html styles ... */
+/* Add these new styles to your existing Explore.css */
+
+/* Search Bar */
+.search-form {
+  max-width: 700px;
+  margin: 30px auto 20px;
+}
+
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 18px;
+  width: 20px;
+  height: 20px;
+  color: #999;
+}
+
+.search-input {
+  flex: 1;
+  padding: 16px 20px 16px 50px;
+  border: 2px solid #FFC69D;
+  border-radius: 50px;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.3s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.search-input:focus {
+  border-color: #CD2C58;
+  box-shadow: 0 0 0 3px rgba(205, 44, 88, 0.1);
+}
+
+.search-btn {
+  position: absolute;
+  right: 5px;
+  padding: 11px 28px;
+  background: #CD2C58;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.search-btn:hover {
+  background: #E06B80;
+  transform: scale(1.02);
+}
+
+/* Trending Searches */
+.trending-searches {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.trending-label {
+  color: #666;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.trending-tag {
+  padding: 5px 15px;
+  background: white;
+  border: 1px solid #FFC69D;
+  border-radius: 30px;
+  font-size: 0.8rem;
+  color: #CD2C58;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.trending-tag:hover {
+  background: #CD2C58;
+  color: white;
+  border-color: #CD2C58;
+}
+
+/* Results Grid */
+.results-section {
+  padding: 40px 0;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 25px;
+}
+
+.result-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.result-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(205,44,88,0.15);
+}
+
+.result-image {
+  position: relative;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+}
+
+.result-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.result-card:hover .result-image img {
+  transform: scale(1.05);
+}
+
+.result-overlay {
+  position: absolute;
+  bottom: -50px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 15px;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  transition: bottom 0.3s ease;
+}
+
+.result-card:hover .result-overlay {
+  bottom: 0;
+}
+
+.save-btn, .like-btn {
+  padding: 6px 15px;
+  border: none;
+  border-radius: 25px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.save-btn {
+  background: white;
+  color: #CD2C58;
+}
+
+.like-btn {
+  background: rgba(255,255,255,0.9);
+  color: #ff4444;
+}
+
+.save-btn:hover {
+  background: #CD2C58;
+  color: white;
+}
+
+.like-btn:hover {
+  background: #ff4444;
+  color: white;
+}
+
+.result-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 12px;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  backdrop-filter: blur(5px);
+}
+
+.result-info {
+  padding: 15px;
+}
+
+.result-info h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1E1E2E;
+  margin-bottom: 8px;
+}
+
+.result-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.result-tag {
+  font-size: 0.7rem;
+  color: #CD2C58;
+  background: #FFE6D4;
+  padding: 2px 8px;
+  border-radius: 15px;
+}
+
+.result-stats {
+  display: flex;
+  gap: 15px;
+  font-size: 0.75rem;
+  color: #999;
+}
+
+/* Loading State */
+.loading-state {
+  text-align: center;
+  padding: 60px;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid #FFE6D4;
+  border-top-color: #CD2C58;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* No Results */
+.no-results {
+  text-align: center;
+  padding: 60px;
+  background: white;
+  border-radius: 24px;
+}
+
+.no-results-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+}
+
+.no-results h3 {
+  font-size: 1.5rem;
+  color: #1E1E2E;
+  margin-bottom: 10px;
+}
+
+.no-results p {
+  color: #666;
+  margin-bottom: 25px;
+}
+
+.suggestion-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.suggestion-tag {
+  padding: 8px 20px;
+  background: #CD2C58;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.suggestion-tag:hover {
+  background: #E06B80;
+  transform: translateY(-2px);
+}
+
+/* Inspiration Section */
+.inspiration-section {
+  padding: 60px 0;
+  background: #FFF9F5;
+}
+
+.inspiration-title {
+  font-size: 2rem;
+  font-family: 'Playfair Display', serif;
+  text-align: center;
+  margin-bottom: 40px;
+  color: #1E1E2E;
+}
+
+.inspiration-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.inspiration-card {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  cursor: pointer;
+  aspect-ratio: 3/4;
+  transition: all 0.3s ease;
+}
+
+.inspiration-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+}
+
+.inspiration-image {
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.5s ease;
+}
+
+.inspiration-card:hover .inspiration-image {
+  transform: scale(1.05);
+}
+
+.inspiration-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 30px 20px 20px;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  color: white;
+}
+
+.inspiration-content h3 {
+  font-size: 1.2rem;
+  margin-bottom: 5px;
+}
+
+.inspiration-content p {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+@media (max-width: 1024px) {
+  .inspiration-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .search-input {
+    padding: 14px 20px 14px 45px;
+    font-size: 0.9rem;
+  }
+  
+  .search-btn {
+    padding: 9px 20px;
+    font-size: 0.85rem;
+  }
+  
+  .trending-searches {
+    gap: 8px;
+  }
+  
+  .trending-tag {
+    padding: 4px 12px;
+    font-size: 0.7rem;
+  }
+  
+  .inspiration-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
+}

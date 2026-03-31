@@ -1,6 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
 import PrivateRoute from "./routes/PrivateRoute";
-import Navbar from './components/Navbar';  // ← MOVED OUTSIDE Routes
+import Navbar from './components/Navbar';
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import MessagesView from "./pages/MessagesView";
 
 /* Public Pages */
 import Home from "./pages/Home";
@@ -17,62 +21,84 @@ import Profile from "./pages/Profile";
 import Recommendations from "./pages/Recommendations";
 import Event from "./pages/Event";
 
+/* New Features */
+import Planner from "./pages/Planner";
+import Suitcase from "./pages/Suitcase";
+import Notes from "./pages/Organizer";
+import History from "./pages/History";
+
 function App() {
   return (
     <Router>
-      {/* ← NAVBAR NOW VISIBLE ON ALL PAGES */}
-      <Navbar />
-      
-      <Routes>
-        {/* ========== PUBLIC ROUTES ========== */}
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/explore" element={<Explore />} />
-        <Route path="/inspiration" element={<Inspiration />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+      <AuthProvider>
+        <Navbar />
+        
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/explore" element={<Explore />} />
+          <Route path="/inspiration" element={<Inspiration />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/admin/messages" element={<MessagesView />} />
 
-        {/* ========== PROTECTED ROUTES ========== */}
-        <Route
-          path="/wardrobe"
-          element={
+          {/* Protected Routes */}
+          <Route path="/wardrobe" element={
             <PrivateRoute>
               <Wardrobe />
             </PrivateRoute>
-          }
-        />
+          } />
 
-        <Route
-          path="/profile"
-          element={
+          <Route path="/profile" element={
             <PrivateRoute>
               <Profile />
             </PrivateRoute>
-          }
-        />
+          } />
 
-        <Route
-          path="/recommendations"
-          element={
+          <Route path="/recommendations" element={
             <PrivateRoute>
               <Recommendations />
             </PrivateRoute>
-          }
-        />
+          } />
 
-        <Route
-          path="/event"
-          element={
+          <Route path="/event" element={
             <PrivateRoute>
               <Event />
             </PrivateRoute>
-          }
-        />
+          } />
 
-        {/* ========== FALLBACK ROUTE ========== */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          <Route path="/planner" element={
+            <PrivateRoute>
+              <Planner />
+            </PrivateRoute>
+          } />
+
+          <Route path="/suitcase" element={
+            <PrivateRoute>
+              <Suitcase />
+            </PrivateRoute>
+          } />
+
+          <Route path="/notes" element={
+            <PrivateRoute>
+              <Notes />
+            </PrivateRoute>
+          } />
+
+          <Route path="/history" element={
+            <PrivateRoute>
+              <History />
+            </PrivateRoute>
+          } />
+
+          {/* Fallback - MUST BE LAST */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
     </Router>
   );
 }

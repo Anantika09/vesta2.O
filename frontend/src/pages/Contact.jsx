@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import PageHeader from '../components/PageHeader';
+import api from '../utils/api';
 import './Contact.css';
 
 const Contact = () => {
@@ -9,122 +11,139 @@ const Contact = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+    setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate form submission
-    setTimeout(() => {
+    setError('');
+
+    if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
+      setError('All fields are required');
       setIsSubmitting(false);
-      setIsSubmitted(true);
-      setFormData({ name: '', email: '', message: '' });
-      setTimeout(() => setIsSubmitted(false), 3000);
-    }, 1500);
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const response = await api.sendContact(formData);
+      if (response.status === 'success') {
+        setIsSubmitted(true);
+        setFormData({ name: '', email: '', message: '' });
+        setTimeout(() => setIsSubmitted(false), 5000);
+      }
+    } catch (err) {
+      setError('Failed to send message. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const contactInfo = [
+    { icon: '📧', title: 'Email', details: ['vesta.helpus@gmail.com', 'vesta.supportus@gmail.com'] },
+    { icon: '📍', title: 'Location', details: ['GLA University', 'Mathura, Uttar Pradesh', 'India'] },
+    { icon: '📞', title: 'Phone', details: ['+91 73009 64601'] }
+  ];
 
   return (
     <div className="contact-page">
-      {/* Simple Background */}
-      <div className="contact-bg"></div>
+      <PageHeader 
+        title="Get in Touch" 
+        subtitle="Have questions about Vesta? We'd love to hear from you." 
+      />
 
       <div className="contact-container">
-        {/* Header */}
-        <div className="contact-header">
-          <span className="contact-tag">CONTACT</span>
-          <h1 className="contact-title">Get in touch</h1>
-          <p className="contact-subtitle">
-            Have questions about Vesta? We'd love to hear from you.
-          </p>
-        </div>
-
-        {/* Two Column Layout */}
         <div className="contact-grid">
-          {/* Left Column - Info */}
+          {/* Left Column - Contact Info */}
           <div className="contact-info">
-            <div className="info-card">
-              <h2 className="info-title">Email us</h2>
-              <a href="mailto:hello@vesta.style" className="info-email">hello@vesta.style</a>
-              <a href="mailto:support@vesta.style" className="info-email">support@vesta.style</a>
-            </div>
-
-            <div className="info-card">
-              <h2 className="info-title">Visit us</h2>
-              <p className="info-address">
-                GLA University<br />
-                Mathura, Uttar Pradesh<br />
-                India
-              </p>
-            </div>
-
-            <div className="info-card">
-              <h2 className="info-title">Call us</h2>
-              <a href="tel:+919105188751" className="info-phone">+91 91051 88751</a>
-            </div>
-
-            <div className="info-card">
-              <h2 className="info-title">Follow us</h2>
-              <div className="social-links">
-                <a href="#" className="social-link">Instagram</a>
-                <a href="#" className="social-link">Twitter</a>
-                <a href="#" className="social-link">LinkedIn</a>
+            {contactInfo.map((info, index) => (
+              <div key={index} className="info-card">
+                <div className="info-icon">{info.icon}</div>
+                <div className="info-content">
+                  <h3>{info.title}</h3>
+                  {info.details.map((detail, i) => (
+                    info.title === 'Email' ? (
+                      <a key={i} href={`mailto:${detail}`} className="info-detail">{detail}</a>
+                    ) : info.title === 'Phone' ? (
+                      <a key={i} href={`tel:${detail.replace(/\s/g, '')}`} className="info-detail">{detail}</a>
+                    ) : (
+                      <p key={i} className="info-detail">{detail}</p>
+                    )
+                  ))}
+                </div>
               </div>
-            </div>
+            ))}
           </div>
 
-          {/* Right Column - Form */}
-          <div className="contact-form-col">
+          {/* Right Column - Contact Form */}
+          <div className="contact-form-section">
             <div className="form-card">
-              <h2 className="form-card-title">Send a message</h2>
+              <h2>Send us a message</h2>
+              <p>We'll get back to you within 24 hours</p>
               
               {isSubmitted ? (
                 <div className="success-message">
-                  <span className="success-icon">✓</span>
-                  <p>Thank you! We'll get back to you soon.</p>
+                  <div className="success-icon">✓</div>
+                  <h3>Message Sent!</h3>
+                  <p>Thank you for reaching out. We'll get back to you soon.</p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="contact-form">
+                  {error && (
+                    <div className="error-message">
+                      <span>!</span>
+                      <span>{error}</span>
+                    </div>
+                  )}
+                  
                   <div className="form-group">
-                    <label htmlFor="name" className="form-label">Your name</label>
+                    <label htmlFor="name">Your name</label>
                     <input
                       type="text"
                       id="name"
                       name="name"
-                      className="form-input"
                       value={formData.name}
                       onChange={handleChange}
+                      placeholder="John Doe"
                       required
                     />
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="email" className="form-label">Email address</label>
+                    <label htmlFor="email">Email address</label>
                     <input
                       type="email"
                       id="email"
                       name="email"
-                      className="form-input"
                       value={formData.email}
                       onChange={handleChange}
+                      placeholder="hello@vesta.style"
                       required
                     />
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="message" className="form-label">Message</label>
+                    <label htmlFor="message">Your message</label>
                     <textarea
                       id="message"
                       name="message"
-                      className="form-input form-textarea"
                       value={formData.message}
                       onChange={handleChange}
+                      placeholder="Tell us how we can help..."
                       rows="5"
                       required
                     />
@@ -135,7 +154,10 @@ const Contact = () => {
                     className="submit-btn"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? 'Sending...' : 'Send message'}
+                    {isSubmitting ? 'Sending...' : 'Send Message'}
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
                   </button>
                 </form>
               )}

@@ -1,11 +1,16 @@
-// backend/server.js - GUARANTEED WORKING VERSION
 require('dotenv').config();
+
 const express = require('express');
-const { MongoClient } = require('mongodb'); // Direct MongoDB driver
+const { MongoClient, ObjectId } = require('mongodb');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+
 const app = express();
 
 // Middleware
@@ -14,41 +19,72 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, '../frontend')));
+
+// Create uploads directory
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Multer config for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname);
+    cb(null, uniqueName);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    if (extname && mimetype) {
+      return cb(null, true);
+    }
+    cb(new Error('Only image files are allowed'));
+  }
+});
+
+// Email transporter
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER || 'your-email@gmail.com',
+    pass: process.env.EMAIL_PASS || 'your-app-password',
+  },
+});
+
 // MongoDB Connection
 const mongoURI = process.env.MONGO_URI;
 let db, client;
 
 async function connectToMongoDB() {
   try {
-    console.log('🔗 Connecting to MongoDB Atlas...');
-    client = new MongoClient(mongoURI, {
-      serverSelectionTimeoutMS: 10000,
-      socketTimeoutMS: 45000,
-    });
-    
+    client = new MongoClient(mongoURI);
     await client.connect();
     db = client.db('vestaDB');
+    console.log('✅ MongoDB Connected Successfully!');
     
-    // Create collections if they don't exist
     const collections = await db.listCollections().toArray();
-    const collectionNames = collections.map(c => c.name);
-    
-    if (!collectionNames.includes('users')) {
+    if (!collections.find(c => c.name === 'users')) {
       await db.createCollection('users');
       await db.collection('users').createIndex({ email: 1 }, { unique: true });
       console.log('📁 Created "users" collection');
     }
-    
-    if (!collectionNames.includes('wardrobe')) {
+    if (!collections.find(c => c.name === 'wardrobe')) {
       await db.createCollection('wardrobe');
       console.log('📁 Created "wardrobe" collection');
     }
-    
-    console.log('✅ MongoDB Atlas Connected Successfully!');
-    console.log(`📊 Database: ${db.databaseName}`);
-    console.log(`📁 Collections: ${collectionNames.join(', ')}`);
-    
+    if (!collections.find(c => c.name === 'contacts')) {
+  await db.createCollection('contacts');
+  console.log('📁 Created "contacts" collection');
+}
     return true;
   } catch (error) {
     console.error('❌ MongoDB connection failed:', error.message);
@@ -56,493 +92,472 @@ async function connectToMongoDB() {
     return false;
   }
 }
-
-// Start connection
 connectToMongoDB();
 
-// In-memory fallback database
-const memoryDB = {
-  users: [],
-  wardrobe: []
-};
+// In-memory fallback
+const memoryDB = { users: [], wardrobe: [] };
+const resetTokens = {};
 
-// ====================
-// DATABASE HELPERS
-// ====================
 async function dbOperation(operation) {
   if (db) {
-    try {
-      return await operation(db);
-    } catch (error) {
-      console.error('Database operation failed:', error);
-      // Fallback to memory
-      return operation(memoryDB, true);
-    }
-  } else {
-    return operation(memoryDB, true);
+    try { return await operation(db); }
+    catch (e) { return operation(memoryDB, true); }
   }
+  return operation(memoryDB, true);
 }
 
-// ====================
-// API ENDPOINTS
-// ====================
+const JWT_SECRET = process.env.JWT_SECRET || 'vesta_super_secret_key_2024';
 
-// Health check
-app.get('/api/health', async (req, res) => {
-  const isConnected = db ? true : false;
-  
+// ==================== HEALTH CHECK ====================
+app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
     message: 'Vesta API is running',
-    database: isConnected ? 'MongoDB Atlas' : 'In-memory fallback',
-    timestamp: new Date().toISOString(),
-    endpoints: [
-      'GET /api/health',
-      'GET /api/test-jwt',
-      'POST /api/auth/register',
-      'POST /api/auth/login',
-      'GET /api/auth/me',
-      'GET /api/wardrobe',
-      'POST /api/wardrobe',
-      'GET /api/styles/recommendations',
-      'POST /api/contact'
-    ]
+    database: db ? 'MongoDB Atlas' : 'In-memory',
+    timestamp: new Date().toISOString()
   });
 });
 
-// Test JWT
-app.get('/api/test-jwt', (req, res) => {
-  try {
-    const token = jwt.sign(
-      { test: 'Vesta API' },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-    
-    res.json({
-      success: true,
-      token: token.substring(0, 50) + '...',
-      message: 'JWT authentication is working',
-      secret: 'Configured ✓'
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+// ==================== AUTH ENDPOINTS ====================
 
-// Register user
+// Register
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { name, email, password, skinTone, bodyType, gender } = req.body;
-    
-    // Validate
+    const { name, email, password } = req.body;
     if (!name || !email || !password) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'Name, email, and password are required'
-      });
+      return res.status(400).json({ status: 'error', message: 'All fields required' });
     }
-    
+
     const result = await dbOperation(async (database, isMemory) => {
+      const existing = isMemory ? memoryDB.users.find(u => u.email === email) : await database.collection('users').findOne({ email });
+      if (existing) throw new Error('User already exists');
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const newUser = { name, email, password: hashedPassword, createdAt: new Date() };
+
       if (isMemory) {
-        // Memory database
-        const existing = memoryDB.users.find(u => u.email === email);
-        if (existing) throw new Error('User already exists');
-        
-        const hashedPassword = await bcrypt.hash(password, 12);
-        const newUser = {
-          id: Date.now().toString(),
-          name,
-          email,
-          password: hashedPassword,
-          profile: { skinTone, bodyType, gender },
-          createdAt: new Date()
-        };
-        
+        newUser.id = Date.now().toString();
         memoryDB.users.push(newUser);
         return { insertedId: newUser.id, user: newUser };
-      } else {
-        // MongoDB
-        const existing = await database.collection('users').findOne({ email });
-        if (existing) throw new Error('User already exists');
-        
-        const hashedPassword = await bcrypt.hash(password, 12);
-        const newUser = {
-          name,
-          email,
-          password: hashedPassword,
-          profile: { 
-            skinTone: skinTone || 'medium',
-            bodyType: bodyType || 'hourglass',
-            gender: gender || 'prefer-not-to-say'
-          },
-          createdAt: new Date()
-        };
-        
-        const result = await database.collection('users').insertOne(newUser);
-        return { insertedId: result.insertedId, user: newUser };
       }
+      const result = await database.collection('users').insertOne(newUser);
+      return { insertedId: result.insertedId, user: newUser };
     });
-    
-    // Generate JWT token
-    const token = jwt.sign(
-      { 
-        id: result.insertedId.toString(),
-        email: email 
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-    
-    // Remove password from response
-    const userResponse = { ...result.user };
-    delete userResponse.password;
-    
-    res.status(201).json({
-      status: 'success',
-      token,
-      data: {
-        user: userResponse
-      }
-    });
-    
+
+    const token = jwt.sign({ id: result.insertedId.toString(), email }, JWT_SECRET, { expiresIn: '7d' });
+    delete result.user.password;
+    res.status(201).json({ status: 'success', token, data: { user: result.user } });
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(400).json({
-      status: 'error',
-      message: error.message
-    });
+    res.status(400).json({ status: 'error', message: error.message });
   }
 });
 
-// Login user
+// Login
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    
-    const result = await dbOperation(async (database, isMemory) => {
-      if (isMemory) {
-        const user = memoryDB.users.find(u => u.email === email);
-        if (!user) throw new Error('User not found');
-        
-        const valid = await bcrypt.compare(password, user.password);
-        if (!valid) throw new Error('Invalid password');
-        
-        return user;
-      } else {
-        const user = await database.collection('users').findOne({ email });
-        if (!user) throw new Error('User not found');
-        
-        const valid = await bcrypt.compare(password, user.password);
-        if (!valid) throw new Error('Invalid password');
-        
-        return user;
-      }
+    const user = await dbOperation(async (database, isMemory) => {
+      const u = isMemory ? memoryDB.users.find(u => u.email === email) : await database.collection('users').findOne({ email });
+      if (!u) throw new Error('Invalid credentials');
+      const valid = await bcrypt.compare(password, u.password);
+      if (!valid) throw new Error('Invalid credentials');
+      return u;
     });
-    
-    // Generate JWT
-    const token = jwt.sign(
-      { 
-        id: result._id ? result._id.toString() : result.id,
-        email: result.email 
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-    
-    // Remove password from response
-    const userResponse = { ...result };
-    delete userResponse.password;
-    
-    res.json({
-      status: 'success',
-      token,
-      data: {
-        user: userResponse
-      }
-    });
-    
+
+    const token = jwt.sign({ id: user._id?.toString() || user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+    delete user.password;
+    res.json({ status: 'success', token, data: { user } });
   } catch (error) {
-    res.status(401).json({
-      status: 'error',
-      message: error.message
-    });
+    res.status(401).json({ status: 'error', message: error.message });
   }
 });
 
 // Get current user
 app.get('/api/auth/me', async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ status: 'error', message: 'No token' });
-    }
-    
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ status: 'error', message: 'No token' });
+    const decoded = jwt.verify(token, JWT_SECRET);
     const user = await dbOperation(async (database, isMemory) => {
-      if (isMemory) {
-        return memoryDB.users.find(u => 
-          u.id === decoded.id || u.email === decoded.email
-        );
-      } else {
-        return await database.collection('users').findOne({
-          $or: [
-            { _id: new require('mongodb').ObjectId(decoded.id) },
-            { email: decoded.email }
-          ]
-        });
-      }
+      if (isMemory) return memoryDB.users.find(u => u.id === decoded.id);
+      return await database.collection('users').findOne({ _id: new ObjectId(decoded.id) });
     });
-    // ADD THESE 2 LINES - EXACTLY HERE (before 404 handler)
-app.post('/api/contact/send', (req, res) => {
-  const { name, email, message } = req.body;
-  console.log(`📩 Contact: ${name}`);
-  res.json({ success: true, message: "Message sent!" });
-});
-
-    if (!user) {
-      return res.status(404).json({ status: 'error', message: 'User not found' });
-    }
-    
-    // Remove password
+    if (!user) throw new Error('User not found');
     delete user.password;
-    
-    res.json({
-      status: 'success',
-      data: { user }
-    });
-    
+    res.json({ status: 'success', data: { user } });
   } catch (error) {
     res.status(401).json({ status: 'error', message: 'Invalid token' });
   }
 });
 
-// Get wardrobe items
-app.get('/api/wardrobe', async (req, res) => {
+// Forgot Password
+app.post('/api/auth/forgot-password', async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ status: 'error', message: 'Authentication required' });
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ status: 'error', message: 'Email is required' });
     }
-    
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.id;
-    
-    const items = await dbOperation(async (database, isMemory) => {
+
+    const user = await dbOperation(async (database, isMemory) => {
+      if (isMemory) return memoryDB.users.find(u => u.email === email);
+      return await database.collection('users').findOne({ email });
+    });
+
+    if (!user) {
+      return res.status(200).json({
+        status: 'success',
+        message: 'If an account exists, a reset link has been sent.'
+      });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetExpires = Date.now() + 3600000; // 1 hour
+
+    resetTokens[resetToken] = {
+      email,
+      expires: resetExpires,
+      userId: user._id?.toString() || user.id
+    };
+
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${resetToken}`;
+
+    const mailOptions = {
+      from: '"Vesta" <noreply@vesta.style>',
+      to: email,
+      subject: 'Reset Your Vesta Password',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9;">
+          <h2 style="color: #CD2C58;">Reset Your Password</h2>
+          <p>You requested to reset your password for your Vesta account.</p>
+          <p>Click the button below to reset your password:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" style="background: #CD2C58; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block;">Reset Password</a>
+          </div>
+          <p>This link will expire in 1 hour.</p>
+          <p>If you didn't request this, please ignore this email.</p>
+          <hr style="margin: 20px 0;" />
+          <p style="font-size: 12px; color: #666;">Vesta - Your Digital Wardrobe Assistant</p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    res.json({ status: 'success', message: 'Password reset link sent to your email.' });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ status: 'error', message: 'Server error. Please try again.' });
+  }
+});
+
+// Reset Password
+app.post('/api/auth/reset-password/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ status: 'error', message: 'Password is required' });
+    }
+
+    const resetData = resetTokens[token];
+    if (!resetData || resetData.expires < Date.now()) {
+      return res.status(400).json({ status: 'error', message: 'Invalid or expired reset token' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await dbOperation(async (database, isMemory) => {
       if (isMemory) {
-        return memoryDB.wardrobe.filter(item => item.userId === userId);
+        const userIndex = memoryDB.users.findIndex(u => u.email === resetData.email);
+        if (userIndex !== -1) {
+          memoryDB.users[userIndex].password = hashedPassword;
+        }
       } else {
-        return await database.collection('wardrobe')
-          .find({ userId })
-          .sort({ createdAt: -1 })
-          .toArray();
+        await database.collection('users').updateOne(
+          { email: resetData.email },
+          { $set: { password: hashedPassword } }
+        );
       }
     });
-    
-    res.json({
-      status: 'success',
-      results: items.length,
-      data: items
+
+    delete resetTokens[token];
+    res.json({ status: 'success', message: 'Password reset successful. You can now login.' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ status: 'error', message: 'Server error. Please try again.' });
+  }
+});
+
+// ==================== WARDROBE ENDPOINTS ====================
+
+app.get('/api/wardrobe', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ status: 'error', message: 'Authentication required' });
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const userId = decoded.id;
+
+    const items = await dbOperation(async (database, isMemory) => {
+      if (isMemory) return memoryDB.wardrobe.filter(item => item.userId === userId);
+      return await database.collection('wardrobe').find({ userId }).sort({ createdAt: -1 }).toArray();
     });
-    
+
+    const itemsWithFullUrl = items.map(item => ({
+      ...item,
+      imageUrl: item.imageUrl?.startsWith('http') ? item.imageUrl : `http://localhost:5000${item.imageUrl}`
+    }));
+
+    res.json({ status: 'success', results: itemsWithFullUrl.length, data: itemsWithFullUrl });
   } catch (error) {
     res.status(500).json({ status: 'error', message: error.message });
   }
 });
 
-// Add to wardrobe
-app.post('/api/wardrobe', async (req, res) => {
+app.post('/api/wardrobe', upload.single('image'), async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ status: 'error', message: 'Authentication required' });
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ status: 'error', message: 'Authentication required' });
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const { name, category, subCategory, occasion, season, color, brand, size } = req.body;
+
+    if (!name || !category) {
+      return res.status(400).json({ status: 'error', message: 'Name and category are required' });
     }
-    
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    const { name, category, color, imageUrl, tags } = req.body;
-    
+
+    let imageUrl = '';
+    if (req.file) {
+      imageUrl = `/uploads/${req.file.filename}`;
+    } else {
+      return res.status(400).json({ status: 'error', message: 'Image is required' });
+    }
+
     const newItem = {
       userId: decoded.id,
       name,
       category,
-      color,
-      imageUrl: imageUrl || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&h=400&fit=crop',
-      tags: tags || [],
+      subCategory: subCategory || '',
+      occasion: occasion || 'casual',
+      season: season || 'all',
+      color: color || '',
+      brand: brand || '',
+      size: size || '',
+      imageUrl,
       createdAt: new Date()
     };
-    
+
     const result = await dbOperation(async (database, isMemory) => {
       if (isMemory) {
         newItem.id = Date.now().toString();
         memoryDB.wardrobe.push(newItem);
         return { insertedId: newItem.id };
-      } else {
-        return await database.collection('wardrobe').insertOne(newItem);
       }
+      return await database.collection('wardrobe').insertOne(newItem);
     });
-    
-    res.status(201).json({
-      status: 'success',
-      data: {
-        item: { ...newItem, _id: result.insertedId }
+
+    const fullImageUrl = `http://localhost:5000${imageUrl}`;
+    res.status(201).json({ status: 'success', data: { item: { ...newItem, _id: result.insertedId, imageUrl: fullImageUrl } } });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ status: 'error', message: error.message });
+  }
+});
+
+app.delete('/api/wardrobe/:id', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ status: 'error', message: 'Authentication required' });
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const itemId = req.params.id;
+
+    const result = await dbOperation(async (database, isMemory) => {
+      if (isMemory) {
+        const index = memoryDB.wardrobe.findIndex(item => item.id === itemId && item.userId === decoded.id);
+        if (index !== -1) {
+          memoryDB.wardrobe.splice(index, 1);
+          return { deletedCount: 1 };
+        }
+        return { deletedCount: 0 };
       }
+      return await database.collection('wardrobe').deleteOne({ _id: new ObjectId(itemId), userId: decoded.id });
     });
-    
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ status: 'error', message: 'Item not found' });
+    }
+
+    res.json({ status: 'success', message: 'Item deleted successfully' });
   } catch (error) {
     res.status(500).json({ status: 'error', message: error.message });
   }
 });
 
-// Style recommendations
+// ==================== CONTACT ENDPOINT ====================
+app.post('/api/contact', async (req, res) => {
+  try {
+    const { name, email, message } = req.body;
+    
+    if (!name || !email || !message) {
+      return res.status(400).json({ 
+        status: 'error', 
+        message: 'Name, email, and message are required' 
+      });
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ 
+        status: 'error', 
+        message: 'Please enter a valid email address' 
+      });
+    }
+
+    const contactData = {
+      name,
+      email,
+      message,
+      createdAt: new Date(),
+      status: 'unread',
+      ip: req.ip || req.connection.remoteAddress
+    };
+
+    // Save to database
+    await dbOperation(async (database, isMemory) => {
+      if (isMemory) {
+        contactData.id = Date.now().toString();
+        if (!memoryDB.contacts) memoryDB.contacts = [];
+        memoryDB.contacts.push(contactData);
+        return { insertedId: contactData.id };
+      }
+      return await database.collection('contacts').insertOne(contactData);
+    });
+
+    console.log(`📧 New contact message from: ${name} (${email})`);
+    console.log(`📝 Message: ${message.substring(0, 100)}...`);
+
+    res.json({ 
+      status: 'success', 
+      message: 'Message sent successfully! We\'ll get back to you soon.' 
+    });
+
+  } catch (error) {
+    console.error('Contact form error:', error);
+    res.status(500).json({ 
+      status: 'error', 
+      message: 'Failed to send message. Please try again.' 
+    });
+  }
+});
+
+// ==================== GET ALL CONTACTS (Admin only) ====================
+app.get('/api/admin/contacts', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ status: 'error', message: 'Authentication required' });
+    }
+    
+    const decoded = jwt.verify(token, JWT_SECRET);
+    
+    // Simple admin check - you can add an admin role in production
+    // For now, any logged-in user can see contacts (you can change this)
+    
+    const contacts = await dbOperation(async (database, isMemory) => {
+      if (isMemory) {
+        return memoryDB.contacts || [];
+      }
+      return await database.collection('contacts')
+        .find({})
+        .sort({ createdAt: -1 })
+        .toArray();
+    });
+
+    res.json({ 
+      status: 'success', 
+      results: contacts.length,
+      data: contacts 
+    });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: error.message });
+  }
+});
+
+// ==================== MARK CONTACT AS READ ====================
+app.put('/api/admin/contacts/:id/read', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ status: 'error', message: 'Authentication required' });
+    }
+    
+    jwt.verify(token, JWT_SECRET);
+    const { id } = req.params;
+
+    await dbOperation(async (database, isMemory) => {
+      if (isMemory) {
+        const contact = (memoryDB.contacts || []).find(c => c.id === id);
+        if (contact) contact.status = 'read';
+      } else {
+        await database.collection('contacts').updateOne(
+          { _id: new ObjectId(id) },
+          { $set: { status: 'read', readAt: new Date() } }
+        );
+      }
+    });
+
+    res.json({ status: 'success', message: 'Contact marked as read' });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: error.message });
+  }
+});
+
+// ==================== STYLE RECOMMENDATIONS ====================
 app.get('/api/styles/recommendations', (req, res) => {
   const { skinTone = 'medium', occasion = 'casual' } = req.query;
-  
+
   const recommendations = {
     fair: {
-      casual: [
-        {
-          id: 1,
-          image: 'https://images.unsplash.com/photo-1529139574466-a303027c1d30?w=400&h=600&fit=crop',
-          title: 'Pastel Perfection',
-          description: 'Soft colors that complement fair skin',
-          colors: ['pastel blue', 'lavender', 'cream'],
-          tags: ['casual', 'daytime', 'spring']
-        }
-      ],
-      party: [
-        {
-          id: 2,
-          image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&h=600&fit=crop',
-          title: 'Silver Elegance',
-          description: 'Metallics that make fair skin glow',
-          colors: ['navy', 'silver', 'burgundy'],
-          tags: ['party', 'evening', 'formal']
-        }
-      ]
+      casual: [{ id: 1, title: 'Pastel Perfection', image: 'https://images.unsplash.com/photo-1529139574466-a303027c1d30?w=400&h=600&fit=crop', description: 'Soft colors that complement fair skin', colors: ['pastel blue', 'lavender', 'cream'] }],
+      party: [{ id: 2, title: 'Silver Elegance', image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&h=600&fit=crop', description: 'Metallics that make fair skin glow', colors: ['navy', 'silver', 'burgundy'] }]
     },
     medium: {
-      casual: [
-        {
-          id: 3,
-          image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400&h=600&fit=crop',
-          title: 'Earth Tone Comfort',
-          description: 'Warm colors for medium skin tones',
-          colors: ['olive', 'rust', 'khaki'],
-          tags: ['casual', 'autumn', 'comfort']
-        }
-      ],
-      party: [
-        {
-          id: 4,
-          image: 'https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=400&h=600&fit=crop',
-          title: 'Golden Glamour',
-          description: 'Gold accents enhance medium skin',
-          colors: ['gold', 'emerald', 'burgundy'],
-          tags: ['party', 'wedding', 'festive']
-        }
-      ]
+      casual: [{ id: 3, title: 'Earth Tone Comfort', image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400&h=600&fit=crop', description: 'Warm colors for medium skin tones', colors: ['olive', 'rust', 'khaki'] }],
+      party: [{ id: 4, title: 'Golden Glamour', image: 'https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=400&h=600&fit=crop', description: 'Gold accents enhance medium skin', colors: ['gold', 'emerald', 'burgundy'] }]
     },
     dark: {
-      casual: [
-        {
-          id: 5,
-          image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400&h=600&fit=crop',
-          title: 'Bold & Beautiful',
-          description: 'Vibrant colors that pop on dark skin',
-          colors: ['white', 'bright yellow', 'coral'],
-          tags: ['casual', 'summer', 'vibrant']
-        }
-      ],
-      party: [
-        {
-          id: 6,
-          image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=600&fit=crop',
-          title: 'Jewel Tone Majesty',
-          description: 'Rich jewel tones for elegance',
-          colors: ['purple', 'ruby red', 'emerald'],
-          tags: ['party', 'formal', 'luxury']
-        }
-      ]
+      casual: [{ id: 5, title: 'Bold & Beautiful', image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400&h=600&fit=crop', description: 'Vibrant colors that pop on dark skin', colors: ['white', 'bright yellow', 'coral'] }],
+      party: [{ id: 6, title: 'Jewel Tone Majesty', image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=600&fit=crop', description: 'Rich jewel tones for elegance', colors: ['purple', 'ruby red', 'emerald'] }]
     }
   };
-  
+
   const skinData = recommendations[skinTone] || recommendations.medium;
   const occasionData = skinData[occasion] || skinData.casual;
-  
-  res.json({
-    status: 'success',
-    skinTone,
-    occasion,
-    results: occasionData.length,
-    data: occasionData
-  });
+
+  res.json({ status: 'success', skinTone, occasion, results: occasionData.length, data: occasionData });
 });
 
-// Contact form
-app.post('/api/contact', (req, res) => {
-  const { name, email, message } = req.body;
-  
-  console.log(`📧 New contact: ${name} <${email}>: ${message}`);
-  
-  res.json({
-    status: 'success',
-    message: 'Thank you for contacting Vesta! We\'ll respond soon.'
-  });
-});
+// Serve static files
+app.use('/uploads', express.static(uploadDir));
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    status: 'error',
-    message: `Route ${req.originalUrl} not found`
-  });
-});
-app.get('/frontend/*', (req, res) => {
-  const filePath = path.join(__dirname, '../frontend', req.params[0]);
-  res.sendFile(filePath, (err) => {
-    if (err) {
-      res.status(404).json({ error: 'File not found' });
-    }
-  });
-});
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`
   ╔══════════════════════════════════════════╗
-  ║         VESTA BACKEND v2.0              ║
+  ║         VESTA BACKEND v3.0              ║
   ╠══════════════════════════════════════════╣
   ║  🌐 Server: http://localhost:${PORT}      ║
   ║  🔐 JWT: ✓ Configured                   ║
-  ║  📊 Database: ${db ? 'MongoDB Atlas ✓' : 'In-memory'}        ║
-  ║  📁 Environment: development            ║
+  ║  📸 Upload: ✓ Configured                ║
+  ║  📧 Email: ✓ Configured                 ║
+  ╠══════════════════════════════════════════╣
+  ║  ✅ POST   /api/auth/register           ║
+  ║  ✅ POST   /api/auth/login              ║
+  ║  ✅ POST   /api/auth/forgot-password    ║
+  ║  ✅ POST   /api/auth/reset-password     ║
+  ║  ✅ GET    /api/wardrobe                ║
+  ║  ✅ POST   /api/wardrobe (with image)   ║
+  ║  ✅ DELETE /api/wardrobe/:id            ║
+  ║  ✅ POST   /api/contact                 ║
   ╚══════════════════════════════════════════╝
-  
-  📍 Available Endpoints:
-  ✅ GET    /api/health           - Health check
-  ✅ GET    /api/test-jwt        - Test JWT
-  ✅ POST   /api/auth/register   - Register user
-  ✅ POST   /api/auth/login      - Login user
-  ✅ GET    /api/auth/me         - Get current user
-  ✅ GET    /api/wardrobe        - Wardrobe items
-  ✅ POST   /api/wardrobe        - Add to wardrobe
-  ✅ GET    /api/styles/recommendations - Style suggestions
-  ✅ POST   /api/contact         - Contact form
-  
-  🔧 Database: ${db ? 'MongoDB Atlas (Production-ready)' : 'In-memory (Development)'}
   `);
-});
-
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  console.log('\n👋 Shutting down gracefully...');
-  if (client) {
-    await client.close();
-    console.log('📴 MongoDB connection closed');
-  }
-  process.exit(0);
 });

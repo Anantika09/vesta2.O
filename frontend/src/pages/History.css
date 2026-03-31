@@ -1,0 +1,457 @@
+.history-page {
+  min-height: 100vh;
+  background: #FEF9F5;
+  padding: 120px 40px 60px;
+  font-family: 'Inter', sans-serif;
+}
+
+.history-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.history-header h1 {
+  font-size: 2.5rem;
+  font-family: 'Playfair Display', serif;
+  color: #1E1E2E;
+  margin-bottom: 10px;
+}
+
+.history-header p {
+  color: #6B6B7B;
+  font-size: 1.1rem;
+}
+
+.history-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 40px;
+}
+
+/* Wardrobe List */
+.wardrobe-list {
+  background: white;
+  border-radius: 24px;
+  padding: 25px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  border: 1px solid #FFE6D4;
+}
+
+.wardrobe-list h3 {
+  font-size: 1.3rem;
+  color: #CD2C58;
+  margin-bottom: 20px;
+}
+
+.wardrobe-items {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.history-item-card {
+  display: flex;
+  gap: 15px;
+  padding: 15px;
+  background: #FEF9F5;
+  border-radius: 16px;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.history-item-card:hover {
+  border-color: #FFC69D;
+  transform: translateX(5px);
+}
+
+.history-item-card img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.item-details {
+  flex: 1;
+}
+
+.item-details h4 {
+  font-size: 1rem;
+  color: #1E1E2E;
+  margin-bottom: 5px;
+}
+
+.item-category {
+  font-size: 0.75rem;
+  color: #CD2C58;
+  margin-bottom: 8px;
+}
+
+.last-worn {
+  font-size: 0.8rem;
+  color: #6B6B7B;
+  margin-bottom: 4px;
+}
+
+.worn-count {
+  font-size: 0.75rem;
+  color: #CD2C58;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.mark-worn-btn {
+  padding: 6px 12px;
+  background: #CD2C58;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mark-worn-btn:hover {
+  background: #E06B80;
+  transform: translateY(-2px);
+}
+
+/* History Timeline */
+.history-timeline {
+  background: white;
+  border-radius: 24px;
+  padding: 25px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  border: 1px solid #FFE6D4;
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #FFC69D;
+}
+
+.timeline-header h3 {
+  font-size: 1.2rem;
+  color: #CD2C58;
+}
+
+.timeline-header select {
+  padding: 6px 12px;
+  border: 1px solid #FFC69D;
+  border-radius: 20px;
+  background: white;
+  font-size: 0.8rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: 500px;
+  overflow-y: auto;
+  margin-bottom: 30px;
+}
+
+.timeline-entry {
+  display: flex;
+  gap: 20px;
+  padding: 10px;
+  border-left: 3px solid #CD2C58;
+  margin-left: 10px;
+}
+
+.timeline-date {
+  min-width: 90px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #CD2C58;
+}
+
+.timeline-content {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+  background: #FEF9F5;
+  padding: 12px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.timeline-content:hover {
+  transform: translateX(5px);
+  box-shadow: 0 5px 15px rgba(205,44,88,0.1);
+}
+
+.timeline-image img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.timeline-details {
+  flex: 1;
+}
+
+.timeline-details h4 {
+  font-size: 0.9rem;
+  color: #1E1E2E;
+  margin-bottom: 4px;
+}
+
+.timeline-category {
+  font-size: 0.7rem;
+  color: #CD2C58;
+  margin-bottom: 4px;
+}
+
+.timeline-time {
+  font-size: 0.7rem;
+  color: #A0A0B0;
+}
+
+.empty-timeline {
+  text-align: center;
+  color: #A0A0B0;
+  padding: 40px;
+}
+
+/* Stats Summary */
+.stats-summary {
+  padding-top: 20px;
+  border-top: 1px solid #FFC69D;
+}
+
+.stats-summary h4 {
+  font-size: 1rem;
+  color: #1E1E2E;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  text-align: center;
+}
+
+.stat {
+  padding: 15px;
+  background: #FEF9F5;
+  border-radius: 12px;
+}
+
+.stat-number {
+  display: block;
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #CD2C58;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #6B6B7B;
+}
+
+@media (max-width: 1024px) {
+  .history-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .history-page {
+    padding: 100px 20px 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .timeline-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+  
+  .timeline-entry {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .stats-grid {
+    gap: 10px;
+  }
+  
+  .stat-number {
+    font-size: 1.3rem;
+  }
+}
+/* ===== DELETE FUNCTIONALITY STYLES ===== */
+/* Add these at the end of your existing History.css */
+
+.timeline-header-right {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.clear-all-btn {
+  padding: 6px 16px;
+  background: transparent;
+  border: 1px solid #CD2C58;
+  color: #CD2C58;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.clear-all-btn:hover {
+  background: #CD2C58;
+  color: white;
+}
+
+.delete-entry-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  color: #A0A0B0;
+  transition: all 0.3s ease;
+  opacity: 0;
+  align-self: center;
+}
+
+.timeline-content:hover .delete-entry-btn {
+  opacity: 1;
+}
+
+.delete-entry-btn:hover {
+  background: rgba(205,44,88,0.1);
+  color: #CD2C58;
+  transform: scale(1.1);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.confirm-modal {
+  background: white;
+  border-radius: 24px;
+  padding: 32px;
+  text-align: center;
+  max-width: 380px;
+  width: 90%;
+  animation: modalFadeIn 0.3s ease;
+  border: 1px solid #FFE6D4;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.confirm-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.confirm-modal h3 {
+  font-size: 1.3rem;
+  color: #1E1E2E;
+  margin-bottom: 12px;
+  font-family: 'Playfair Display', serif;
+}
+
+.confirm-modal p {
+  color: #6B6B7B;
+  margin-bottom: 24px;
+  font-size: 0.9rem;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.cancel-btn {
+  padding: 8px 24px;
+  background: transparent;
+  border: 1px solid #FFC69D;
+  border-radius: 30px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancel-btn:hover {
+  background: #FEF9F5;
+  border-color: #CD2C58;
+}
+
+.delete-btn {
+  padding: 8px 24px;
+  background: #CD2C58;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.delete-btn:hover {
+  background: #E06B80;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .timeline-header-right {
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .delete-entry-btn {
+    opacity: 1;
+  }
+  
+  .confirm-modal {
+    padding: 24px;
+    width: 85%;
+  }
+  
+  .confirm-actions {
+    flex-direction: column;
+  }
+  
+  .cancel-btn, .delete-btn {
+    width: 100%;
+  }
+}

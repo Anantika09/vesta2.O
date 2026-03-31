@@ -1,290 +1,391 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef , useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Home.css';
 
 const Home = () => {
   const navigate = useNavigate();
-  
-  useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('active');
-        }
-      });
-    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+  const [activeIndex, setActiveIndex] = useState(0);
+  const heroRef = useRef(null);
 
-    document.querySelectorAll('.slide-in, .fade-up, .scale-in').forEach(el => observer.observe(el));
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in-view');
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
+
+    document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
     
-    // Parallax effect on scroll
-    const handleScroll = () => {
-      const scrolled = window.scrollY;
-      const hero = document.querySelector('.hero-visual');
-      if (hero) {
-        hero.style.transform = `translateY(${scrolled * 0.1}px)`;
-      }
+    const handleMouseMove = (e) => {
+      if (!heroRef.current) return;
+      const { clientX, clientY } = e;
+      const { width, height, left, top } = heroRef.current.getBoundingClientRect();
+      const x = (clientX - left) / width;
+      const y = (clientY - top) / height;
+      
+      heroRef.current.style.setProperty('--mouse-x', x);
+      heroRef.current.style.setProperty('--mouse-y', y);
     };
-    
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      observer.disconnect();
+    };
   }, []);
 
-  // Your local images with exact filenames
-  const heroImages = {
-    glam: "/images/hero/outfit-glam.jpg",
-    casual: "/images/hero/outfit-casual.jpg",
-    party: "/images/hero/outfit-party.jpg",
-    bridal: "/images/hero/outfit-bridal.jpg"
-  };
-
-  const showcaseImages = {
-    top: "/images/showcase/outfit1.jpg",
-    jeans: "/images/showcase/outfit2.jpg",
-    accessories: "/images/showcase/outfit3.jpg",
-    final: "/images/showcase/outfit4.jpg"
-  };
-
-  const avatarImages = [
-    "/images/avatars/avatar1.jpg",
-    "/images/avatars/avatar2.jpg",
-    "/images/avatars/avatar3.jpg"
-  ];
-
-  const inspirationImages = [
-    { category: "Bridal Looks", count: "2.5k+", color: "#CD2C58", image: "/images/hero/outfit-bridal.jpg" },
-    { category: "Festive Wear", count: "1.8k+", color: "#E06B80", image: "/images/hero/outfit-glam.jpg" },
-    { category: "Casual Chic", count: "3.2k+", color: "#FFC69D", image: "/images/hero/outfit-casual.jpg" },
-    { category: "Party Glam", count: "1.2k+", color: "#FFE6D4", image: "/images/hero/outfit-party.jpg" }
+  const features = [
+    {
+      icon: '👗',
+      title: 'Digital Wardrobe',
+      description: 'Upload, organize, and browse all your clothes in one beautiful digital space.',
+      stat: '2,345 items',
+      statLabel: 'organized',
+      link: '/wardrobe',
+      gradient: 'linear-gradient(135deg, #CD2C58, #E06B80)',
+      bgLight: 'rgba(205,44,88,0.08)'
+    },
+    {
+      icon: '🎨',
+      title: 'Look Planner',
+      description: 'Mix and match outfits virtually. Create stunning looks for any occasion.',
+      stat: '128 looks',
+      statLabel: 'created',
+      link: '/planner',
+      gradient: 'linear-gradient(135deg, #E06B80, #FFC69D)',
+      bgLight: 'rgba(224,107,128,0.08)'
+    },
+    {
+      icon: '🧳',
+      title: 'Suitcase Planner',
+      description: 'Smart packing lists for your travels. Never forget anything again.',
+      stat: '45 trips',
+      statLabel: 'planned',
+      link: '/suitcase',
+      gradient: 'linear-gradient(135deg, #FFC69D, #FFE6D4)',
+      bgLight: 'rgba(255,198,157,0.08)'
+    },
+    {
+      icon: '📝',
+      title: 'Style Notes',
+      description: 'Capture ideas, shopping lists, and fashion inspiration instantly.',
+      stat: '87 notes',
+      statLabel: 'saved',
+      link: '/notes',
+      gradient: 'linear-gradient(135deg, #CD2C58, #FFC69D)',
+      bgLight: 'rgba(205,44,88,0.08)'
+    },
+    {
+      icon: '📅',
+      title: 'Outfit History',
+      description: 'Track your style journey. Know what you wore and when.',
+      stat: '342 wears',
+      statLabel: 'recorded',
+      link: '/history',
+      gradient: 'linear-gradient(135deg, #E06B80, #FFE6D4)',
+      bgLight: 'rgba(224,107,128,0.08)'
+    },
+    {
+      icon: '🔍',
+      title: 'Style Discovery',
+      description: 'Explore thousands of looks from bridal to corporate, worldwide.',
+      stat: '5k+ looks',
+      statLabel: 'available',
+      link: '/explore',
+      gradient: 'linear-gradient(135deg, #FFC69D, #FFE6D4)',
+      bgLight: 'rgba(255,198,157,0.08)'
+    }
   ];
 
   return (
-    <div className="home-page">
-      {/* HERO SECTION */}
-      <section className="hero-section">
-        <div className="hero-pattern"></div>
-        <div className="container hero-container">
-          <div className="hero-content slide-in">
-            <div className="hero-badge">
-              <span className="badge-pulse"></span>
-              AI-POWERED STYLING
-            </div>
-            <h1 className="hero-title">
-              Your Personal
-              <span className="gradient-text"> Style Intelligence</span>
-            </h1>
-            <p className="hero-subtitle">
-              Stop scrolling. Start styling. Vesta analyzes your wardrobe, body type, 
-              and preferences to deliver <span className="highlight">cinematic outfit recommendations</span> 
-              that actually make sense.
-            </p>
-            <div className="hero-stats">
-              <div className="stat-item">
-                <span className="stat-number">10K+</span>
-                <span className="stat-label">Looks Generated</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-number">98%</span>
-                <span className="stat-label">Satisfaction</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-number">15min</span>
-                <span className="stat-label">Avg. Setup</span>
-              </div>
-            </div>
-            <div className="hero-cta">
-              <button className="btn-primary" onClick={() => navigate('/register')}>
-                Start Your Style Journey
-                <i className="ri-arrow-right-line"></i>
-              </button>
-              <button className="btn-outline" onClick={() => navigate('/explore')}>
-                See Inspiration
-              </button>
-            </div>
-            <div className="hero-testimonial">
-              <div className="testimonial-avatars">
-                {avatarImages.map((avatar, index) => (
-                  <img key={index} src={avatar} alt="user" />
-                ))}
-              </div>
-              <p>Join 5,000+ fashion enthusiasts</p>
-            </div>
-          </div>
-
-          <div className="hero-visual scale-in">
-            <div className="floating-card card-1">
-              <div className="card-icon" style={{background: '#CD2C58'}}>👗</div>
-              <div className="card-content">
-                <h4>Today's Pick</h4>
-                <p>Summer Elegance</p>
-              </div>
-            </div>
-            <div className="floating-card card-2">
-              <div className="card-icon" style={{background: '#E06B80'}}>💄</div>
-              <div className="card-content">
-                <h4>Makeup Match</h4>
-                <p>Nude Glow</p>
-              </div>
-            </div>
-            <div className="floating-card card-3">
-              <div className="card-icon" style={{background: '#FFC69D'}}>👠</div>
-              <div className="card-content">
-                <h4>Accessory</h4>
-                <p>Gold Statement</p>
-              </div>
-            </div>
-            <div className="hero-image-grid">
-              <div className="grid-item item-1" style={{backgroundImage: `url(${heroImages.glam})`}}>
-                <div className="image-overlay"></div>
-                <span className="image-label">Glam</span>
-              </div>
-              <div className="grid-item item-2" style={{backgroundImage: `url(${heroImages.casual})`}}>
-                <div className="image-overlay"></div>
-                <span className="image-label">Casual</span>
-              </div>
-              <div className="grid-item item-3" style={{backgroundImage: `url(${heroImages.party})`}}>
-                <div className="image-overlay"></div>
-                <span className="image-label">Party</span>
-              </div>
-              <div className="grid-item item-4" style={{backgroundImage: `url(${heroImages.bridal})`}}>
-                <div className="image-overlay"></div>
-                <span className="image-label">Bridal</span>
-              </div>
-            </div>
-          </div>
+    <div className="home">
+      {/* Hero Section */}
+      <section className="hero" ref={heroRef}>
+        <div className="hero-particles">
+          <div className="particle"></div>
+          <div className="particle"></div>
+          <div className="particle"></div>
+          <div className="particle"></div>
+          <div className="particle"></div>
+          <div className="particle"></div>
+          <div className="particle"></div>
+          <div className="particle"></div>
         </div>
-      </section>
-
-      {/* HOW VESTA WORKS */}
-      <section className="process-section">
+        
+        <div className="hero-glow"></div>
+        
         <div className="container">
-          <div className="section-header text-center fade-up">
-            <span className="section-subtitle">THE METHOD</span>
-            <h2 className="section-title">Three Steps to <span className="gradient-text">Perfect Style</span></h2>
-            <p className="section-description">
-              No more guesswork. No more endless scrolling. Just your personal styling assistant.
-            </p>
-          </div>
-
-          <div className="process-grid">
-            {[
-              {
-                num: "01",
-                title: "Upload & Archive",
-                desc: "Snap photos of your clothes. Vesta builds your digital wardrobe automatically.",
-                features: ["AI Tagging", "Color Analysis", "Season Sorting"]
-              },
-              {
-                num: "02",
-                title: "Discover Your Style DNA",
-                desc: "Our AI analyzes your body type, skin tone, and preferences.",
-                features: ["Body Shape Match", "Tone Harmony", "Trend Alignment"]
-              },
-              {
-                num: "03",
-                title: "Get Cinematic Looks",
-                desc: "Receive Instagram-worthy outfit combinations tailored to any occasion.",
-                features: ["Event Based", "Weather Aware", "Mix & Match"]
-              }
-            ].map((item, i) => (
-              <div key={i} className="process-card slide-in" style={{animationDelay: `${i * 0.2}s`}}>
-                <div className="process-number">{item.num}</div>
-                <h3>{item.title}</h3>
-                <p className="process-desc">{item.desc}</p>
-                <ul className="process-features">
-                  {item.features.map((feature, idx) => (
-                    <li key={idx}>
-                      <i className="ri-check-line"></i> {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FEATURE SHOWCASE */}
-      <section className="feature-showcase">
-        <div className="container">
-          <div className="showcase-grid">
-            <div className="showcase-content fade-up">
-              <span className="feature-tag">✨ NEW</span>
-              <h2>Visual Search. <span className="gradient-text">Instant Results.</span></h2>
-              <p>Upload any outfit photo and watch Vesta find matching pieces from your wardrobe or suggest similar styles from our inspiration database.</p>
-              
-              <div className="feature-list">
-                {[
-                  "Upload top → Get bottom suggestions",
-                  "Screenshot a celebrity → Find similar items",
-                  "Mix two outfits → AI generates fusion look"
-                ].map((item, i) => (
-                  <div key={i} className="feature-item">
-                    <i className="ri-camera-line" style={{color: '#CD2C58'}}></i>
-                    <span>{item}</span>
-                  </div>
-                ))}
+          <div className="hero-grid">
+            <div className="hero-content reveal">
+              <div className="hero-badge">
+                <span className="badge-icon">✨</span>
+                <span>AI-Powered Style Assistant</span>
               </div>
               
-              <button className="btn-secondary" onClick={() => navigate('/wardrobe')}>
-                Explore Visual Search
-                <i className="ri-arrow-right-line"></i>
-              </button>
-            </div>
-            
-            <div className="showcase-visual scale-in">
-              <div className="visual-grid">
-                <div className="visual-item" style={{backgroundImage: `url(${showcaseImages.top})`}}>
-                  <span className="visual-tag">Your Top</span>
+              <h1 className="hero-title">
+                Your Digital
+                <span className="hero-title-gradient"> Wardrobe</span>
+                <span className="hero-title-outline">Reimagined</span>
+              </h1>
+              
+              <p className="hero-description">
+                Upload your clothes. Organize by category. Plan looks. Pack for trips.
+                <span className="hero-description-highlight"> Everything in one place.</span>
+              </p>
+              
+              <div className="hero-stats">
+                <div className="hero-stat">
+                  <span className="hero-stat-number">10,000+</span>
+                  <span className="hero-stat-label">Items Organized</span>
                 </div>
-                <div className="visual-item" style={{backgroundImage: `url(${showcaseImages.jeans})`}}>
-                  <span className="visual-tag">Suggested Jeans</span>
+                <div className="hero-stat-divider"></div>
+                <div className="hero-stat">
+                  <span className="hero-stat-number">500+</span>
+                  <span className="hero-stat-label">Trips Planned</span>
                 </div>
-                <div className="visual-item" style={{backgroundImage: `url(${showcaseImages.accessories})`}}>
-                  <span className="visual-tag">Accessories</span>
-                </div>
-                <div className="visual-item" style={{backgroundImage: `url(${showcaseImages.final})`}}>
-                  <span className="visual-tag">Final Look</span>
+                <div className="hero-stat-divider"></div>
+                <div className="hero-stat">
+                  <span className="hero-stat-number">98%</span>
+                  <span className="hero-stat-label">Satisfaction Rate</span>
                 </div>
               </div>
-              <div className="visual-overlay"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* INSPIRATION SNIPPET */}
-      <section className="inspiration-snippet">
-        <div className="container">
-          <div className="snippet-header text-center fade-up">
-            <h2>From 'What do I wear?' to <span className="gradient-text">'Wow, that's me'</span></h2>
-          </div>
-          
-          <div className="inspiration-grid">
-            {inspirationImages.map((item, i) => (
-              <div key={i} className="inspiration-card scale-in" style={{animationDelay: `${i * 0.1}s`}}>
-                <div className="card-image" style={{backgroundImage: `url(${item.image})`}}>
-                  <div className="card-overlay" style={{background: `linear-gradient(135deg, ${item.color}80, transparent)`}}></div>
-                </div>
-                <h3>{item.category}</h3>
-                <p>{item.count} curated looks</p>
-                <button className="card-btn">
-                  <i className="ri-arrow-right-line"></i>
+              
+              <div className="hero-actions">
+                <button className="btn-primary" onClick={() => navigate('/register')}>
+                  <span>Start Free</span>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </button>
+                <button className="btn-secondary" onClick={() => navigate('/explore')}>
+                  <span>Discover Styles</span>
                 </button>
               </div>
+              
+              <div className="hero-trust">
+                <div className="trust-avatars">
+                  <img src="https://randomuser.me/api/portraits/women/1.jpg" alt="User" />
+                  <img src="https://randomuser.me/api/portraits/men/2.jpg" alt="User" />
+                  <img src="https://randomuser.me/api/portraits/women/3.jpg" alt="User" />
+                  <img src="https://randomuser.me/api/portraits/men/4.jpg" alt="User" />
+                  <div className="trust-count">+5k</div>
+                </div>
+                <p>Join 5,000+ style enthusiasts</p>
+              </div>
+            </div>
+            
+            <div className="hero-visual reveal">
+              <div className="visual-container">
+                <div className="visual-card">
+                  <div className="visual-card-inner">
+                    <div className="visual-image"></div>
+                    <div className="visual-overlay"></div>
+                    
+                    <div className="floating-element element-1">
+                      <div className="floating-icon">👗</div>
+                      <div className="floating-info">
+                        <span>Your Wardrobe</span>
+                        <strong>120 items</strong>
+                      </div>
+                    </div>
+                    
+                    <div className="floating-element element-2">
+                      <div className="floating-icon">✈️</div>
+                      <div className="floating-info">
+                        <span>Next Trip</span>
+                        <strong>Goa - 5 days</strong>
+                      </div>
+                    </div>
+                    
+                    <div className="floating-element element-3">
+                      <div className="floating-icon">📦</div>
+                      <div className="floating-info">
+                        <span>Packing List</span>
+                        <strong>12 items packed</strong>
+                      </div>
+                    </div>
+                    
+                    <div className="visual-stats">
+                      <div className="visual-stat">
+                        <span className="visual-stat-number">234</span>
+                        <span className="visual-stat-label">Outfits Created</span>
+                      </div>
+                      <div className="visual-stat">
+                        <span className="visual-stat-number">87%</span>
+                        <span className="visual-stat-label">Less Shopping</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="hero-scroll">
+          <span>Scroll to explore</span>
+          <div className="scroll-indicator"></div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="features">
+        <div className="container">
+          <div className="section-header reveal">
+            <div className="section-badge">Everything You Need</div>
+            <h2 className="section-title">
+              All in One Place<span className="gradient-text">One Place</span>
+            </h2>
+            <p className="section-description">
+              From organizing your wardrobe to planning your next adventure
+            </p>
+          </div>
+
+          <div className="features-grid">
+            {features.map((feature, index) => (
+              <div
+                key={index}
+                className="feature-card reveal"
+                style={{ transitionDelay: `${index * 0.05}s` }}
+                onClick={() => navigate(feature.link)}
+              >
+                <div className="feature-card-inner">
+                  <div className="feature-icon" style={{ background: feature.bgLight }}>
+                    <span style={{ background: feature.gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                      {feature.icon}
+                    </span>
+                  </div>
+                  <h3 className="feature-title">{feature.title}</h3>
+                  <p className="feature-description">{feature.description}</p>
+                  <div className="feature-meta">
+                    <div className="feature-stat">
+                      <span className="feature-stat-number">{feature.stat}</span>
+                      <span className="feature-stat-label">{feature.statLabel}</span>
+                    </div>
+                    <div className="feature-link">
+                      <span>Explore</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M5 12h14M12 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA SECTION */}
-      <section className="cta-section">
+      {/* Process Section */}
+      <section className="process">
         <div className="container">
-          <div className="cta-content fade-up">
-            <h2>Ready to revolutionize your wardrobe?</h2>
+          <div className="section-header reveal">
+            <div className="section-badge">Simple Process</div>
+            <h2 className="section-title">
+              How It Works<span className="gradient-text">Works</span>
+            </h2>
+            <p className="section-description">Three simple steps to organize your style</p>
+          </div>
+
+          <div className="process-steps">
+            <div className="process-step reveal">
+              <div className="step-number">01</div>
+              <div className="step-icon-wrapper">
+                <div className="step-icon">📸</div>
+              </div>
+              <h3>Upload</h3>
+              <p>Snap photos of your clothes. Add them to your digital wardrobe.</p>
+            </div>
+            
+            <div className="process-step reveal">
+              <div className="step-number">02</div>
+              <div className="step-icon-wrapper">
+                <div className="step-icon">📁</div>
+              </div>
+              <h3>Organize</h3>
+              <p>Categorize by type, season, occasion. Everything easy to find.</p>
+            </div>
+            
+            <div className="process-step reveal">
+              <div className="step-number">03</div>
+              <div className="step-icon-wrapper">
+                <div className="step-icon">✨</div>
+              </div>
+              <h3>Plan</h3>
+              <p>Create outfits, plan looks, pack for trips with confidence.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Travel Feature */}
+      <section className="travel">
+        <div className="container">
+          <div className="travel-card reveal">
+            <div className="travel-badge">✈️ For Travel Lovers</div>
+            <h2>Pack Smarter, Not Harder</h2>
+            <p>Create trips, add items from your wardrobe, and check them off as you pack. Perfect for frequent travelers who never want to forget anything.</p>
+            <button className="travel-btn" onClick={() => navigate('/suitcase')}>
+              Plan Your Next Trip
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </button>
+            <div className="travel-stats">
+              <div className="travel-stat">
+                <span className="travel-stat-number">500+</span>
+                <span>Trips Planned</span>
+              </div>
+              <div className="travel-stat">
+                <span className="travel-stat-number">100%</span>
+                <span>Never Forget</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Sustainable Section */}
+      <section className="sustainable">
+        <div className="container">
+          <div className="sustainable-card reveal">
+            <div className="sustainable-icon">🌱</div>
+            <h2>Sustainable Choice</h2>
+            <p>Know what you own. Wear what you have. No overbuying. No waste.</p>
+            <div className="sustainable-features">
+              <div className="sustainable-feature">
+                <span>✓</span>
+                <span>Privacy First — No ads, no data sharing</span>
+              </div>
+              <div className="sustainable-feature">
+                <span>✓</span>
+                <span>Use what you own — Stop buying duplicates</span>
+              </div>
+              <div className="sustainable-feature">
+                <span>✓</span>
+                <span>Track your style — See what you actually wear</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="cta">
+        <div className="container">
+          <div className="cta-card reveal">
+            <h2>Ready to Transform Your Wardrobe?</h2>
             <p>Join thousands of users who never have a 'bad outfit day' anymore.</p>
-            <button className="btn-primary btn-large" onClick={() => navigate('/register')}>
-              Create Your Style Profile
-              <i className="ri-sparkling-line"></i>
+            <button className="cta-btn" onClick={() => navigate('/register')}>
+              Start Your Style Journey
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
             </button>
           </div>
         </div>

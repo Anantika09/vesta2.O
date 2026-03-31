@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './Event.css';
-
+import PageHeader from '../components/PageHeader';
 const sampleEvents = [
   {
     id: 1,
