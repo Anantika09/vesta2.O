@@ -10,7 +10,6 @@ const nodemailer = require('nodemailer');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-
 const app = express();
 
 // Middleware
@@ -21,12 +20,12 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 
 // Create uploads directory
+
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
-
-// Multer config for file uploads
+// Configure multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -39,7 +38,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -50,7 +49,6 @@ const upload = multer({
     cb(new Error('Only image files are allowed'));
   }
 });
-
 // Email transporter
 const transporter = nodemailer.createTransport({
   service: 'gmail',
