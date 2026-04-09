@@ -14,8 +14,17 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5000', 'https://vesta-wfcf.onrender.com'],
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5000',
+    'https://vesta-wfcf.onrender.com',
+    'https://vesta-gold.vercel.app',     // Your Vercel URL
+    'https://vesta.vercel.app',
+    'https://vesta2-o.vercel.app'
+  ],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json({ limit: '10mb' }));
 
