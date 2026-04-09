@@ -14,17 +14,17 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5000'],
+  origin: ['http://localhost:3000', 'http://localhost:5000', 'https://vesta-wfcf.onrender.com'],
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
 
 // Create uploads directory
-
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
+
 // Configure multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -38,7 +38,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -49,6 +49,7 @@ const upload = multer({
     cb(new Error('Only image files are allowed'));
   }
 });
+
 // Email transporter
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -80,9 +81,9 @@ async function connectToMongoDB() {
       console.log('📁 Created "wardrobe" collection');
     }
     if (!collections.find(c => c.name === 'contacts')) {
-  await db.createCollection('contacts');
-  console.log('📁 Created "contacts" collection');
-}
+      await db.createCollection('contacts');
+      console.log('📁 Created "contacts" collection');
+    }
     return true;
   } catch (error) {
     console.error('❌ MongoDB connection failed:', error.message);
@@ -93,7 +94,7 @@ async function connectToMongoDB() {
 connectToMongoDB();
 
 // In-memory fallback
-const memoryDB = { users: [], wardrobe: [] };
+const memoryDB = { users: [], wardrobe: [], contacts: [] };
 const resetTokens = {};
 
 async function dbOperation(operation) {
@@ -395,19 +396,12 @@ app.post('/api/contact', async (req, res) => {
     const { name, email, message } = req.body;
     
     if (!name || !email || !message) {
-      return res.status(400).json({ 
-        status: 'error', 
-        message: 'Name, email, and message are required' 
-      });
+      return res.status(400).json({ status: 'error', message: 'Name, email, and message are required' });
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return res.status(400).json({ 
-        status: 'error', 
-        message: 'Please enter a valid email address' 
-      });
+      return res.status(400).json({ status: 'error', message: 'Please enter a valid email address' });
     }
 
     const contactData = {
@@ -415,11 +409,9 @@ app.post('/api/contact', async (req, res) => {
       email,
       message,
       createdAt: new Date(),
-      status: 'unread',
-      ip: req.ip || req.connection.remoteAddress
+      status: 'unread'
     };
 
-    // Save to database
     await dbOperation(async (database, isMemory) => {
       if (isMemory) {
         contactData.id = Date.now().toString();
@@ -431,7 +423,6 @@ app.post('/api/contact', async (req, res) => {
     });
 
     console.log(`📧 New contact message from: ${name} (${email})`);
-    console.log(`📝 Message: ${message.substring(0, 100)}...`);
 
     res.json({ 
       status: 'success', 
@@ -440,72 +431,7 @@ app.post('/api/contact', async (req, res) => {
 
   } catch (error) {
     console.error('Contact form error:', error);
-    res.status(500).json({ 
-      status: 'error', 
-      message: 'Failed to send message. Please try again.' 
-    });
-  }
-});
-
-// ==================== GET ALL CONTACTS (Admin only) ====================
-app.get('/api/admin/contacts', async (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
-      return res.status(401).json({ status: 'error', message: 'Authentication required' });
-    }
-    
-    const decoded = jwt.verify(token, JWT_SECRET);
-    
-    // Simple admin check - you can add an admin role in production
-    // For now, any logged-in user can see contacts (you can change this)
-    
-    const contacts = await dbOperation(async (database, isMemory) => {
-      if (isMemory) {
-        return memoryDB.contacts || [];
-      }
-      return await database.collection('contacts')
-        .find({})
-        .sort({ createdAt: -1 })
-        .toArray();
-    });
-
-    res.json({ 
-      status: 'success', 
-      results: contacts.length,
-      data: contacts 
-    });
-  } catch (error) {
-    res.status(500).json({ status: 'error', message: error.message });
-  }
-});
-
-// ==================== MARK CONTACT AS READ ====================
-app.put('/api/admin/contacts/:id/read', async (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
-      return res.status(401).json({ status: 'error', message: 'Authentication required' });
-    }
-    
-    jwt.verify(token, JWT_SECRET);
-    const { id } = req.params;
-
-    await dbOperation(async (database, isMemory) => {
-      if (isMemory) {
-        const contact = (memoryDB.contacts || []).find(c => c.id === id);
-        if (contact) contact.status = 'read';
-      } else {
-        await database.collection('contacts').updateOne(
-          { _id: new ObjectId(id) },
-          { $set: { status: 'read', readAt: new Date() } }
-        );
-      }
-    });
-
-    res.json({ status: 'success', message: 'Contact marked as read' });
-  } catch (error) {
-    res.status(500).json({ status: 'error', message: error.message });
+    res.status(500).json({ status: 'error', message: 'Failed to send message. Please try again.' });
   }
 });
 
@@ -537,8 +463,9 @@ app.get('/api/styles/recommendations', (req, res) => {
 // Serve static files
 app.use('/uploads', express.static(uploadDir));
 
+// ==================== START SERVER ====================
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`
   ╔══════════════════════════════════════════╗
   ║         VESTA BACKEND v3.0              ║
@@ -547,15 +474,6 @@ app.listen(PORT, () => {
   ║  🔐 JWT: ✓ Configured                   ║
   ║  📸 Upload: ✓ Configured                ║
   ║  📧 Email: ✓ Configured                 ║
-  ╠══════════════════════════════════════════╣
-  ║  ✅ POST   /api/auth/register           ║
-  ║  ✅ POST   /api/auth/login              ║
-  ║  ✅ POST   /api/auth/forgot-password    ║
-  ║  ✅ POST   /api/auth/reset-password     ║
-  ║  ✅ GET    /api/wardrobe                ║
-  ║  ✅ POST   /api/wardrobe (with image)   ║
-  ║  ✅ DELETE /api/wardrobe/:id            ║
-  ║  ✅ POST   /api/contact                 ║
   ╚══════════════════════════════════════════╝
   `);
 });
