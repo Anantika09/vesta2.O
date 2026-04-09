@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Register.css';
@@ -17,6 +17,35 @@ const Register = () => {
   const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState(0);
+
+  useEffect(() => {
+    const strength = calculatePasswordStrength(formData.password);
+    setPasswordStrength(strength);
+  }, [formData.password]);
+
+  const calculatePasswordStrength = (password) => {
+    let strength = 0;
+    if (password.length >= 8) strength += 25;
+    if (password.match(/[a-z]+/)) strength += 25;
+    if (password.match(/[A-Z]+/)) strength += 25;
+    if (password.match(/[0-9]+/)) strength += 25;
+    return strength;
+  };
+
+  const getStrengthColor = () => {
+    if (passwordStrength < 25) return '#ff4444';
+    if (passwordStrength < 50) return '#ffa700';
+    if (passwordStrength < 75) return '#ffd700';
+    return '#00C851';
+  };
+
+  const getStrengthText = () => {
+    if (passwordStrength < 25) return 'Very Weak';
+    if (passwordStrength < 50) return 'Weak';
+    if (passwordStrength < 75) return 'Good';
+    return 'Strong';
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -105,6 +134,7 @@ const Register = () => {
                   onChange={handleChange}
                   required
                 />
+                <span className="input-icon">👤</span>
               </div>
 
               <div className="input-group">
@@ -119,6 +149,7 @@ const Register = () => {
                   onChange={handleChange}
                   required
                 />
+                <span className="input-icon">👤</span>
               </div>
             </div>
 
@@ -134,6 +165,7 @@ const Register = () => {
                 onChange={handleChange}
                 required
               />
+              <span className="input-icon">📧</span>
             </div>
 
             <div className="input-group">
@@ -157,6 +189,23 @@ const Register = () => {
                   {showPassword ? '👁️' : '👁️‍🗨️'}
                 </button>
               </div>
+              
+              {formData.password && (
+                <div className="password-strength">
+                  <div className="strength-bar">
+                    <div 
+                      className="strength-fill"
+                      style={{ 
+                        width: `${passwordStrength}%`,
+                        backgroundColor: getStrengthColor()
+                      }}
+                    />
+                  </div>
+                  <span className="strength-text" style={{ color: getStrengthColor() }}>
+                    {getStrengthText()}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="input-group">
@@ -171,6 +220,7 @@ const Register = () => {
                 onChange={handleChange}
                 required
               />
+              <span className="input-icon">✓</span>
             </div>
 
             {error && (
@@ -196,6 +246,51 @@ const Register = () => {
                 Sign in here
               </Link>
             </p>
+          </div>
+        </div>
+
+        {/* Feature Sidebar - Restored */}
+        <div className="feature-sidebar animate-slide-up" style={{animationDelay: '0.2s'}}>
+          <h3>What You Can Do</h3>
+          <ul className="feature-list">
+            <li className="feature-item">
+              <span className="feature-icon">👗</span>
+              <div>
+                <strong>Digital Wardrobe</strong>
+                <p>Store all your clothes, footwear, accessories</p>
+              </div>
+            </li>
+            <li className="feature-item">
+              <span className="feature-icon">🎨</span>
+              <div>
+                <strong>Look Planner</strong>
+                <p>Mix and match outfits virtually</p>
+              </div>
+            </li>
+            <li className="feature-item">
+              <span className="feature-icon">🧳</span>
+              <div>
+                <strong>Suitcase Planner</strong>
+                <p>Smart packing lists for travel</p>
+              </div>
+            </li>
+            <li className="feature-item">
+              <span className="feature-icon">📝</span>
+              <div>
+                <strong>Style Notes</strong>
+                <p>Save ideas, shopping lists, inspiration</p>
+              </div>
+            </li>
+          </ul>
+          <div className="testimonial-card">
+            <p>"Vesta completely changed how I manage my wardrobe. No more forgotten clothes!"</p>
+            <div className="testimonial-author">
+              <div className="author-avatar">A</div>
+              <div>
+                <strong>Anantika Agarwal</strong>
+                <span>Creator</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

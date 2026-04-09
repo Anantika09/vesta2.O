@@ -8,6 +8,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -16,6 +17,12 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+
+    if (!email || !password) {
+      setError('Please enter both email and password');
+      setIsLoading(false);
+      return;
+    }
 
     const result = await login(email, password);
     
@@ -86,6 +93,21 @@ const Login = () => {
               </div>
             </div>
 
+            <div className="login-options">
+              <label className="checkbox-container">
+                <input 
+                  type="checkbox" 
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                <span className="checkmark"></span>
+                <span className="remember-text">Remember me</span>
+              </label>
+              <Link to="/forgot-password" className="forgot-link">
+                Forgot Password?
+              </Link>
+            </div>
+
             {error && (
               <div className="error-message">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -97,8 +119,24 @@ const Login = () => {
               </div>
             )}
 
-            <button type="submit" className="submit-btn" disabled={isLoading}>
-              {isLoading ? 'Signing in...' : 'Sign In'}
+            <button 
+              type="submit" 
+              className="submit-btn"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <span className="loading-spinner"></span>
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                <>
+                  <span>Sign In</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </>
+              )}
             </button>
           </form>
 
@@ -109,6 +147,73 @@ const Login = () => {
                 Sign up here
               </Link>
             </p>
+          </div>
+        </div>
+
+        {/* Feature Sidebar - Fully Restored */}
+        <div className="feature-sidebar animate-slide-up">
+          <h3>Welcome back to Vesta</h3>
+          
+          <div className="welcome-message">
+            <p>Your personal style assistant is ready to help you:</p>
+          </div>
+
+          <ul className="feature-list">
+            <li className="feature-item">
+              <span className="feature-icon">👗</span>
+              <div>
+                <strong>Your Digital Wardrobe</strong>
+                <p>Store all your clothes, footwear, accessories</p>
+              </div>
+            </li>
+            <li className="feature-item">
+              <span className="feature-icon">✨</span>
+              <div>
+                <strong>Look Planner</strong>
+                <p>Mix and match outfits virtually</p>
+              </div>
+            </li>
+            <li className="feature-item">
+              <span className="feature-icon">📸</span>
+              <div>
+                <strong>Suitcase Planner</strong>
+                <p>Smart packing lists for travel</p>
+              </div>
+            </li>
+            <li className="feature-item">
+              <span className="feature-icon">🎯</span>
+              <div>
+                <strong>Style Notes</strong>
+                <p>Save ideas, shopping lists, inspiration</p>
+              </div>
+            </li>
+          </ul>
+
+          <div className="testimonial-card">
+            <div className="quote-mark">"</div>
+            <p>"I've saved hours of outfit planning. Vesta is a game-changer!"</p>
+            <div className="testimonial-author">
+              <div className="author-avatar">M</div>
+              <div>
+                <strong>Garima Saxena</strong>
+                <span>Member since 2025</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="stats-card">
+            <div className="stat-item">
+              <span className="stat-number">10K+</span>
+              <span className="stat-label">Daily Users</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">50K+</span>
+              <span className="stat-label">Outfits</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">98%</span>
+              <span className="stat-label">Satisfaction</span>
+            </div>
           </div>
         </div>
       </div>
