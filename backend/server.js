@@ -22,11 +22,11 @@ async function connectToMongoDB() {
     db = client.db('vestaDB');
     console.log('✅ MongoDB Connected');
     
-    // Create users collection if not exists
     const collections = await db.listCollections().toArray();
     if (!collections.find(c => c.name === 'users')) {
       await db.createCollection('users');
       await db.collection('users').createIndex({ email: 1 }, { unique: true });
+      console.log('✅ Users collection created');
     }
   } catch (error) {
     console.error('❌ MongoDB connection failed:', error.message);
@@ -39,6 +39,29 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Vesta API is running' });
 });
 
+// Get current user
+app.get('/api/auth/me', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ status: 'error', message: 'No token' });
+    }
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret123');
+    const user = await db.collection('users').findOne({ email: decoded.email });
+    
+    if (!user) {
+      return res.status(404).json({ status: 'error', message: 'User not found' });
+    }
+    
+    const { password, ...userWithoutPassword } = user;
+    res.json({ status: 'success', data: { user: userWithoutPassword } });
+    
+  } catch (error) {
+    res.status(401).json({ status: 'error', message: 'Invalid token' });
+  }
+});
+
 // Register
 app.post('/api/auth/register', async (req, res) => {
   try {
@@ -48,16 +71,13 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ status: 'error', message: 'All fields required' });
     }
     
-    // Check if user exists
     const existingUser = await db.collection('users').findOne({ email });
     if (existingUser) {
       return res.status(400).json({ status: 'error', message: 'User already exists' });
     }
     
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    // Create user
     const newUser = {
       name,
       email,
@@ -67,7 +87,6 @@ app.post('/api/auth/register', async (req, res) => {
     
     const result = await db.collection('users').insertOne(newUser);
     
-    // Create token
     const token = jwt.sign(
       { id: result.insertedId.toString(), email },
       process.env.JWT_SECRET || 'secret123',
@@ -118,6 +137,7 @@ app.post('/api/auth/login', async (req, res) => {
     });
     
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ status: 'error', message: error.message });
   }
 });
