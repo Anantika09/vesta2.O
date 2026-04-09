@@ -14,15 +14,14 @@ const app = express();
 const cors = require('cors');
 // Middleware
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:5000',
-    'https://vesta-wfcf.onrender.com',
-    'https://vesta-gold.vercel.app'
-  ],
+  origin: true,
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
 }));
-app.use(express.json({ limit: '10mb' }));
+
+// Handle preflight requests
+app.options('*', cors());
 
 // Create uploads directory
 const uploadDir = path.join(__dirname, 'uploads');
