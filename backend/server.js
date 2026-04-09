@@ -11,7 +11,6 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const app = express();
-const cors = require('cors');
 // Middleware
 app.use(cors({
   origin: true,
