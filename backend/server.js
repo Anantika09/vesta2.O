@@ -39,7 +39,9 @@ app.use((req, res, next) => {
   
   next();
 });
-
+// This MUST be before any route declarations
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 // Handle preflight requests
 app.options('*', cors());
 
