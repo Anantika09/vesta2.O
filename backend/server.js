@@ -11,20 +11,16 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const app = express();
-
+const cors = require('cors');
 // Middleware
 app.use(cors({
   origin: [
     'http://localhost:3000',
     'http://localhost:5000',
     'https://vesta-wfcf.onrender.com',
-    'https://vesta-gold.vercel.app',     // Your Vercel URL
-    'https://vesta.vercel.app',
-    'https://vesta2-o.vercel.app'
+    'https://vesta-gold.vercel.app'
   ],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json({ limit: '10mb' }));
 
