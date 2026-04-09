@@ -1,13 +1,10 @@
 // frontend/src/utils/api.js
+const API_BASE_URL = 'https://vesta-wfcf.onrender.com/api';
 
-const API_BASE_URL = 'http://localhost:5000/api';
-
-// Get token from localStorage
 const getToken = () => {
   return localStorage.getItem('token');
 };
 
-// Generic fetch with authentication
 export const apiFetch = async (endpoint, options = {}) => {
   const token = getToken();
   
@@ -15,13 +12,11 @@ export const apiFetch = async (endpoint, options = {}) => {
     ...options.headers,
   };
   
-  // Add authorization token if available
   if (token && !(options.body instanceof FormData)) {
     headers['Authorization'] = `Bearer ${token}`;
     headers['Content-Type'] = 'application/json';
   } else if (token && options.body instanceof FormData) {
     headers['Authorization'] = `Bearer ${token}`;
-    // Don't set Content-Type for FormData, browser will set it with boundary
   } else if (!(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
   }
@@ -40,9 +35,7 @@ export const apiFetch = async (endpoint, options = {}) => {
   return data;
 };
 
-// API object with all endpoints
 export const api = {
-  // Auth
   register: (userData) => apiFetch('/auth/register', {
     method: 'POST',
     body: JSON.stringify(userData),
@@ -55,7 +48,6 @@ export const api = {
   
   getMe: () => apiFetch('/auth/me'),
   
-  // Wardrobe
   getWardrobe: () => apiFetch('/wardrobe'),
   
   addToWardrobe: (formData) => apiFetch('/wardrobe', {
@@ -67,13 +59,11 @@ export const api = {
     method: 'DELETE',
   }),
   
-  // Contact
   sendContact: (data) => apiFetch('/contact', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
   
-  // Recommendations
   getRecommendations: (skinTone, occasion) => 
     apiFetch(`/styles/recommendations?skinTone=${skinTone}&occasion=${occasion}`),
 };
