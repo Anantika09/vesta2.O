@@ -247,7 +247,7 @@ app.post('/api/auth/reset-password/:token', async (req, res) => {
 
 app.get('/api/wardrobe', async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(' '')[1];
+    const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ status: 'error', message: 'Authentication required' });
     
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret123');
