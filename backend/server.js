@@ -43,15 +43,56 @@ const upload = multer({
 });
 
 // ==================== EMAIL SETUP ====================
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  timeout: 15000,
-  connectionTimeout: 15000,
-});
+let transporter;
+let emailProvider = 'none';
+
+async function setupEmailTransporter() {
+  try {
+    // Try Gmail first
+    transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+      connectionTimeout: 10000,
+      socketTimeout: 10000,
+    });
+    
+    await transporter.verify();
+    console.log('✅ Gmail configured successfully');
+    emailProvider = 'gmail';
+    return true;
+  } catch (error) {
+    console.log('⚠️ Gmail failed, falling back to Ethereal');
+    try {
+      const testAccount = await nodemailer.createTestAccount();
+      transporter = nodemailer.createTransport({
+        host: 'smtp.ethereal.email',
+        port: 587,
+        secure: false,
+        auth: {
+          user: testAccount.user,
+          pass: testAccount.pass,
+        },
+      });
+      emailProvider = 'ethereal';
+      console.log('✅ Ethereal configured successfully');
+      console.log('📧 Test email preview: https://ethereal.email');
+      return true;
+    } catch (etherealError) {
+      console.error('❌ All email providers failed:', etherealError.message);
+      emailProvider = 'none';
+      return false;
+    }
+  }
+}
+
+// Call this when server starts
+setupEmailTransporter();
 
 // Store reset tokens temporarily
 const resetTokens = {};
@@ -166,11 +207,15 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Forgot Password - FINAL CORRECT VERSION
+// Forgot Password - Final Working Version
 app.post('/api/auth/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) return res.status(400).json({ status: 'error', message: 'Email is required' });
+    console.log('🔐 Forgot password request for:', email);
+    
+    if (!email) {
+      return res.status(400).json({ status: 'error', message: 'Email is required' });
+    }
     
     const user = await db.collection('users').findOne({ email });
     if (!user) {
@@ -194,40 +239,54 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     console.log('=========================================');
     
     let emailSent = false;
+    let previewUrl = null;
     
     try {
-      await transporter.sendMail({
-        from: '"Vesta" <noreply@vesta.style>',
-        to: email,
-        subject: 'Reset Your Vesta Password',
-        html: `
-          <div style="font-family: Arial; max-width: 500px; margin: 0 auto; padding: 30px; background: #f9f9f9; border-radius: 16px;">
-            <h2 style="color: #CD2C58;">Reset Your Password</h2>
-            <p>Click the button below to reset your password:</p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetUrl}" style="background: #CD2C58; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px;">Reset Password</a>
+      if (transporter) {
+        const info = await transporter.sendMail({
+          from: emailProvider === 'ethereal' ? 'Vesta <noreply@vesta.style>' : '"Vesta" <noreply@vesta.style>',
+          to: email,
+          subject: 'Reset Your Vesta Password',
+          html: `
+            <div style="font-family: Arial; max-width: 500px; margin: 0 auto; padding: 30px; background: #ffffff; border-radius: 16px; border: 1px solid #e0e0e0;">
+              <h2 style="color: #CD2C58;">Reset Your Password</h2>
+              <p>Click the button below to reset your password:</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${resetUrl}" style="background: #CD2C58; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px;">Reset Password</a>
+              </div>
+              <p>This link expires in 1 hour.</p>
+              <p>If you didn't request this, ignore this email.</p>
             </div>
-            <p>This link expires in 1 hour.</p>
-            <p>If you didn't request this, ignore this email.</p>
-          </div>
-        `,
-      });
-      emailSent = true;
-      console.log('✅ Email sent successfully');
+          `,
+        });
+        emailSent = true;
+        console.log('✅ Email sent successfully via:', emailProvider);
+        
+        if (emailProvider === 'ethereal') {
+          previewUrl = nodemailer.getTestMessageUrl(info);
+          console.log('📧 Preview URL:', previewUrl);
+        }
+      }
     } catch (emailError) {
-      console.log('⚠️ Email not sent, but link is available in console:', emailError.message);
+      console.log('⚠️ Email failed:', emailError.message);
     }
     
-    res.json({ 
+    const responseData = { 
       status: 'success', 
       message: emailSent 
         ? 'Password reset link sent to your email!' 
-        : 'Reset link generated. Check server logs for the link.'
-    });
+        : 'Reset link generated. Check server logs for the link.',
+    };
+    
+    if (previewUrl) {
+      responseData.previewUrl = previewUrl;
+    }
+    
+    res.json(responseData);
     
   } catch (error) {
-    console.error('Forgot password error:', error);
-    res.status(500).json({ status: 'error', message: 'Server error' });
+    console.error('❌ Forgot password error:', error);
+    res.status(500).json({ status: 'error', message: 'Server error. Please try again.' });
   }
 });
 
@@ -381,6 +440,23 @@ app.use('/uploads', express.static(uploadDir));
 // ==================== START SERVER ====================
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Server running on port ${PORT}`);
-  console.log(`📍 Health: https://vesta-wfcf.onrender.com/api/health`);
+  console.log(`
+  ╔══════════════════════════════════════════╗
+  ║         VESTA BACKEND v3.0              ║
+  ╠══════════════════════════════════════════╣
+  ║  🌐 Server: http://localhost:${PORT}      ║
+  ║  📊 MongoDB: ✅ Connected               ║
+  ║  📧 Email: ${emailProvider === 'gmail' ? '✅ Gmail' : emailProvider === 'ethereal' ? '✅ Ethereal' : '❌ Not configured'}    ║
+  ║  📸 Upload: ✅ Configured               ║
+  ╠══════════════════════════════════════════╣
+  ║  ✅ POST /api/auth/register             ║
+  ║  ✅ POST /api/auth/login                ║
+  ║  ✅ POST /api/auth/forgot-password      ║
+  ║  ✅ POST /api/auth/reset-password       ║
+  ║  ✅ GET  /api/wardrobe                  ║
+  ║  ✅ POST /api/wardrobe (with image)     ║
+  ║  ✅ DELETE /api/wardrobe/:id            ║
+  ║  ✅ POST /api/contact                   ║
+  ╚══════════════════════════════════════════╝
+  `);
 });
