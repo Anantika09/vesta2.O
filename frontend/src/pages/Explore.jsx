@@ -5,7 +5,7 @@ import PageHeader from '../components/PageHeader';
 import './Explore.css';
 
 const Explore = () => {
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchResults, setSearchResults] = useState([]);
@@ -15,7 +15,7 @@ const Explore = () => {
   const allLooks = Array.isArray(looksData) ? looksData : [];
 
   // Get unique categories from looksData
-  const categories = [
+  /*const categories = [
     { id: 'all', label: 'All', icon: '✨', count: allLooks.length },
     ...(Array.isArray(allLooks) && allLooks.length > 0 
       ? [...new Set(allLooks.map(look => look.category))]
@@ -28,7 +28,7 @@ const Explore = () => {
           }))
       : [])
   ];
-
+*/
   function getCategoryIcon(category) {
     const icons = {
       bridal: '💍',
@@ -54,7 +54,7 @@ const Explore = () => {
   useEffect(() => {
     // Set initial results
     setSearchResults(allLooks);
-  }, []);
+  }, [allLooks]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -80,7 +80,7 @@ const Explore = () => {
     }, 300);
   };
 
-  const filterByCategory = (categoryId) => {
+  /*const filterByCategory = (categoryId) => {
     setActiveCategory(categoryId);
     
     let results = allLooks;
@@ -99,7 +99,7 @@ const Explore = () => {
     
     setSearchResults(results);
   };
-
+*/
   const quickSearch = (term) => {
     setSearchQuery(term);
     setTimeout(() => {
@@ -256,6 +256,7 @@ const Explore = () => {
       </div>
     </div>
   );
+  
 };
 
 export default Explore;
