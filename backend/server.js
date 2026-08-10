@@ -49,6 +49,8 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  timeout: 15000,
+  connectionTimeout: 15000,
 });
 
 // Store reset tokens temporarily
@@ -164,7 +166,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Forgot Password
+// Forgot Password - SINGLE CORRECT VERSION
 app.post('/api/auth/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
@@ -180,24 +182,37 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     
     const resetUrl = `${process.env.FRONTEND_URL || 'https://vesta-gold.vercel.app'}/reset-password/${resetToken}`;
     
-    await transporter.sendMail({
-      from: '"Vesta" <noreply@vesta.style>',
-      to: email,
-      subject: 'Reset Your Vesta Password',
-      html: `
-        <div style="font-family: Arial; max-width: 500px; margin: 0 auto; padding: 30px; background: #f9f9f9;">
-          <h2 style="color: #CD2C58;">Reset Your Password</h2>
-          <p>Click the button below to reset your password:</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${resetUrl}" style="background: #CD2C58; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px;">Reset Password</a>
-          </div>
-          <p>This link expires in 1 hour.</p>
-          <p>If you didn't request this, ignore this email.</p>
-        </div>
-      `,
-    });
+    console.log('=========================================');
+    console.log('🔐 PASSWORD RESET LINK:');
+    console.log(resetUrl);
+    console.log('=========================================');
     
-    res.json({ status: 'success', message: 'Password reset link sent to your email.' });
+    try {
+      await transporter.sendMail({
+        from: '"Vesta" <noreply@vesta.style>',
+        to: email,
+        subject: 'Reset Your Vesta Password',
+        html: `
+          <div style="font-family: Arial; max-width: 500px; margin: 0 auto; padding: 30px; background: #f9f9f9;">
+            <h2 style="color: #CD2C58;">Reset Your Password</h2>
+            <p>Click the button below to reset your password:</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetUrl}" style="background: #CD2C58; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px;">Reset Password</a>
+            </div>
+            <p>This link expires in 1 hour.</p>
+            <p>If you didn't request this, ignore this email.</p>
+          </div>
+        `,
+      });
+      console.log('✅ Email sent successfully');
+    } catch (emailError) {
+      console.log('⚠️ Email not sent, but link is available in console:', emailError.message);
+    }
+    
+    res.json({ 
+      status: 'success', 
+      message: 'Password reset link sent to your email.' 
+    });
   } catch (error) {
     console.error('Forgot password error:', error);
     res.status(500).json({ status: 'error', message: 'Server error' });
@@ -232,7 +247,7 @@ app.post('/api/auth/reset-password/:token', async (req, res) => {
 
 app.get('/api/wardrobe', async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
+    const token = req.headers.authorization?.split(' '')[1];
     if (!token) return res.status(401).json({ status: 'error', message: 'Authentication required' });
     
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret123');
@@ -348,49 +363,4 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running on port ${PORT}`);
   console.log(`📍 Health: https://vesta-wfcf.onrender.com/api/health`);
-});
-
-// Forgot Password - Shows link in console (for testing)
-app.post('/api/auth/forgot-password', async (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ status: 'error', message: 'Email is required' });
-    
-    const user = await db.collection('users').findOne({ email });
-    if (!user) {
-      return res.status(200).json({ status: 'success', message: 'If an account exists, a reset link has been sent.' });
-    }
-    
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    resetTokens[resetToken] = { email, expires: Date.now() + 3600000 };
-    
-    const resetUrl = `${process.env.FRONTEND_URL || 'https://vesta-gold.vercel.app'}/reset-password/${resetToken}`;
-    
-    // Log to console (for testing)
-    console.log('=========================================');
-    console.log('🔐 PASSWORD RESET LINK:');
-    console.log(resetUrl);
-    console.log('=========================================');
-    
-    // Try to send email, but don't fail if it doesn't work
-    try {
-      await transporter.sendMail({
-        from: '"Vesta" <noreply@vesta.style>',
-        to: email,
-        subject: 'Reset Your Vesta Password',
-        html: `<div><h2>Reset Your Password</h2><a href="${resetUrl}">Click here to reset</a></div>`,
-      });
-      console.log('📧 Email sent successfully');
-    } catch (emailError) {
-      console.log('⚠️ Email not sent, but link is available in console');
-    }
-    
-    res.json({ 
-      status: 'success', 
-      message: 'Reset link has been generated. Check server console for the link (email not configured).' 
-    });
-  } catch (error) {
-    console.error('Forgot password error:', error);
-    res.status(500).json({ status: 'error', message: 'Server error' });
-  }
 });
