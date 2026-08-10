@@ -166,7 +166,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Forgot Password - SINGLE CORRECT VERSION
+// Forgot Password - FINAL CORRECT VERSION
 app.post('/api/auth/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
@@ -174,11 +174,17 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     
     const user = await db.collection('users').findOne({ email });
     if (!user) {
-      return res.status(200).json({ status: 'success', message: 'If an account exists, a reset link has been sent.' });
+      return res.status(200).json({ 
+        status: 'success', 
+        message: 'If an account exists, a reset link has been sent.' 
+      });
     }
     
     const resetToken = crypto.randomBytes(32).toString('hex');
-    resetTokens[resetToken] = { email, expires: Date.now() + 3600000 };
+    resetTokens[resetToken] = { 
+      email, 
+      expires: Date.now() + 3600000 
+    };
     
     const resetUrl = `${process.env.FRONTEND_URL || 'https://vesta-gold.vercel.app'}/reset-password/${resetToken}`;
     
@@ -187,13 +193,15 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     console.log(resetUrl);
     console.log('=========================================');
     
+    let emailSent = false;
+    
     try {
       await transporter.sendMail({
         from: '"Vesta" <noreply@vesta.style>',
         to: email,
         subject: 'Reset Your Vesta Password',
         html: `
-          <div style="font-family: Arial; max-width: 500px; margin: 0 auto; padding: 30px; background: #f9f9f9;">
+          <div style="font-family: Arial; max-width: 500px; margin: 0 auto; padding: 30px; background: #f9f9f9; border-radius: 16px;">
             <h2 style="color: #CD2C58;">Reset Your Password</h2>
             <p>Click the button below to reset your password:</p>
             <div style="text-align: center; margin: 30px 0;">
@@ -204,6 +212,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
           </div>
         `,
       });
+      emailSent = true;
       console.log('✅ Email sent successfully');
     } catch (emailError) {
       console.log('⚠️ Email not sent, but link is available in console:', emailError.message);
@@ -211,8 +220,11 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     
     res.json({ 
       status: 'success', 
-      message: 'Password reset link sent to your email.' 
+      message: emailSent 
+        ? 'Password reset link sent to your email!' 
+        : 'Reset link generated. Check server logs for the link.'
     });
+    
   } catch (error) {
     console.error('Forgot password error:', error);
     res.status(500).json({ status: 'error', message: 'Server error' });
@@ -224,6 +236,14 @@ app.post('/api/auth/reset-password/:token', async (req, res) => {
   try {
     const { token } = req.params;
     const { password } = req.body;
+    
+    if (!password) {
+      return res.status(400).json({ status: 'error', message: 'Password is required' });
+    }
+    
+    if (password.length < 6) {
+      return res.status(400).json({ status: 'error', message: 'Password must be at least 6 characters' });
+    }
     
     const resetData = resetTokens[token];
     if (!resetData || resetData.expires < Date.now()) {
