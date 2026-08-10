@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import './Profile.css';
 
 const Profile = () => {
-  const { user, updateUser } = useAuth();
+  //const { user, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
     name: '',

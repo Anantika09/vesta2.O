@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./Inspiration.css";
-import PageHeader from '../components/PageHeader';
+//import PageHeader from '../components/PageHeader';
 const sampleInspiration = [
   {
     id: 1,

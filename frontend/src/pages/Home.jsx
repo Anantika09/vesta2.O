@@ -4,7 +4,7 @@ import './Home.css';
 
 const Home = () => {
   const navigate = useNavigate();
-  const [activeIndex, setActiveIndex] = useState(0);
+  //const [activeIndex, setActiveIndex] = useState(0);
   const heroRef = useRef(null);
 
   useEffect(() => {
